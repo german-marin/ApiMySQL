@@ -1,5 +1,5 @@
 using ApiMySQL.Data;
-using ApiMySQL.Data.Repositories;
+using ApiMySQL.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,7 +12,10 @@ builder.Services.AddSwaggerGen();
 
 var mySQLConfiguration = new MySQLConfiguration(builder.Configuration.GetConnectionString("MySQLConnection"));
 builder.Services.AddSingleton(mySQLConfiguration);
-builder.Services.AddScoped<ICityRepository, CityRepository>();
+
+builder.Services.AddScoped<IMuscleGroupRepository, MuscleGroupRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IExerciseRepository, ExerciseRepository>();
 
 var app = builder.Build();
 
