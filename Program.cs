@@ -14,6 +14,8 @@ var mySQLConfiguration = new MySQLConfiguration(builder.Configuration.GetConnect
 builder.Services.AddSingleton(mySQLConfiguration);
 
 builder.Services.AddScoped<IMuscleGroupRepository, MuscleGroupRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IExerciseRepository, ExerciseRepository>();
 
 var app = builder.Build();
 
