@@ -16,6 +16,8 @@ builder.Services.AddSingleton(mySQLConfiguration);
 builder.Services.AddScoped<IMuscleGroupRepository, MuscleGroupRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IExerciseRepository, ExerciseRepository>();
+builder.Services.AddScoped<ITrainingRepository, TrainingRepository>();
+builder.Services.AddScoped<ITrainingLineRepository, TrainingLineRepository>();
 
 var app = builder.Build();
 

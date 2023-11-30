@@ -59,8 +59,5 @@ namespace ApiMySQL.Controllers
             await _categoryRepository.DeleteCategory(id);
             return NoContent();
         }
-
-
-
     }
 }
