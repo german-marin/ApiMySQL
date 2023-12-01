@@ -6,7 +6,7 @@ namespace ApiMySQL.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CategoryController : Controller
+    public class CategoryController : ControllerBase
     {
         private readonly ICategoryRepository _categoryRepository;
 

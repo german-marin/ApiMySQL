@@ -7,7 +7,7 @@ namespace ApiMySQL.Controllers
 
     [Route("api/[controller]")]
     [ApiController]
-    public class TrainingController : Controller
+    public class TrainingController : ControllerBase
     {
         private readonly ITrainingRepository _trainingRepository;
 
@@ -54,10 +54,6 @@ namespace ApiMySQL.Controllers
             await _trainingRepository.DeleteTraining(id);
             return NoContent();
         }
-        [HttpGet("lastInsertID")]
-        public async Task<IActionResult> GetLastInsertID()
-        {
-            return Ok(await _trainingRepository.GetLastInsertID());
-        }
+
     }
 }

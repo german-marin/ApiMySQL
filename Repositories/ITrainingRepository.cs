@@ -8,6 +8,6 @@ namespace ApiMySQL.Repositories
         Task<int> InsertTraining(Training training);
         Task<bool> UpdateTraining(Training training);
         Task<bool> DeleteTraining(int id);
-        Task<int> GetLastInsertID();
+
     }
 }

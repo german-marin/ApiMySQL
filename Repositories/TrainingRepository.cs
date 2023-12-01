@@ -68,12 +68,6 @@ namespace ApiMySQL.Repositories
 
             return result > 0;
         }
-        public async Task<int> GetLastInsertID()
-        {  
-            var db = DbConnection();
-            var sql = @"SELECT LAST_INSERT_ID() AS LastID";
-
-            return await db.QueryFirstOrDefaultAsync<int>(sql);
-        }
+        
     }
 }

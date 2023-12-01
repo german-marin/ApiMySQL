@@ -6,7 +6,7 @@ namespace ApiMySQL.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ExerciseController : Controller
+    public class ExerciseController : ControllerBase
     {
         private readonly IExerciseRepository _exerciseRepository;
 
