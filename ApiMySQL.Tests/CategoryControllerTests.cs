@@ -42,13 +42,16 @@ namespace ApiMySQL.Tests.Controllers
             var categoryToUpdate = new Category { ID = 1, Description = "Updated Category", IdMuscleGroup = 1 };
 
             // Act
-            var result = await controller.UpdateCategory(categoryToUpdate) as NoContentResult;
+            var result = await controller.UpdateCategory(categoryToUpdate);
 
             // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.StatusCode, Is.EqualTo(204));
+            Assert.That(result, Is.TypeOf<NoContentResult>());
+
+            var noContentResult = result as NoContentResult;
+            Assert.That(noContentResult.StatusCode, Is.EqualTo(204));
 
             categoryRepositoryMock.Verify(repo => repo.UpdateCategory(It.IsAny<Category>()), Times.Once);
+
         }
 
         [Test]
@@ -60,14 +63,18 @@ namespace ApiMySQL.Tests.Controllers
             var categoryIdToDelete = 1;
 
             // Act
-            var result = await controller.DeleteCategory(categoryIdToDelete) as NoContentResult;
+            var result = await controller.DeleteCategory(categoryIdToDelete); //as NoContentResult;
 
             // Assert
+            Assert.That(result, Is.TypeOf<NoContentResult>());
+
+            var noContentResult = result as NoContentResult;
+            Assert.That(noContentResult.StatusCode, Is.EqualTo(204));
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.StatusCode, Is.EqualTo(204));
+
 
             categoryRepositoryMock.Verify(repo => repo.DeleteCategory(It.IsAny<int>()), Times.Once);
-        }
+        }        
         [Test]
         public async Task GetMuscleGroupCategories_ValidId_ReturnsOkResult()
         {
@@ -135,58 +142,26 @@ namespace ApiMySQL.Tests.Controllers
             Assert.AreEqual(expectedCategory, result.Value);
             categoryRepositoryMock.Verify(repo => repo.GetCategory(It.IsAny<int>()), Times.Once);
         }
-        //[Test]
-        //public async Task InsertCategory_InvalidData_ReturnsBadRequest()
-        //{
-        //    // Arrange
-        //    var categoryRepositoryMock = new Mock<ICategoryRepository>();
-        //    var controller = new CategoryController(categoryRepositoryMock.Object);
-        //    var categoryToInsert = new Category
-        //    {
-        //        Description = null,  // o string.Empty
-        //    };
+        [Test]
+        public async Task InsertCategory_InvalidData_ReturnsBadRequest()
+        {
+            // Arrange
+            var categoryRepositoryMock = new Mock<ICategoryRepository>();
+            var controller = new CategoryController(categoryRepositoryMock.Object);
 
-        //    // Act
-        //    var result = await controller.InsertCategory(categoryToInsert) as BadRequestResult;
+            var categoryToInsert = new Category
+            {
+                Description = "Test",  // o string.Empty
+            };
 
-        //    // Assert
-        //    Assert.That(result, Is.Not.Null);
-        //    Assert.That(result.StatusCode, Is.EqualTo(400));
-        //    categoryRepositoryMock.Verify(repo => repo.InsertCategory(It.IsAny<Category>()), Times.Never);
-        //}
-        //[Test]
-        //public async Task UpdateCategory_NonExistentCategory_ReturnsNotFound()
-        //{
-        //    // Arrange
-        //    var categoryRepositoryMock = new Mock<ICategoryRepository>();
-        //    var controller = new CategoryController(categoryRepositoryMock.Object);
-        //    var categoryToUpdate = new Category { ID = 1, Description = "Updated Category", IdMuscleGroup = 1 };
+            // Act
+            var result = await controller.InsertCategory(categoryToInsert) as BadRequestResult;
 
-        //    // Act
-        //    var result = await controller.UpdateCategory(categoryToUpdate) as NotFoundResult;
-
-        //    // Assert
-        //    Assert.That(result, Is.Not.Null);
-        //    Assert.That(result.StatusCode, Is.EqualTo(404));
-        //    categoryRepositoryMock.Verify(repo => repo.UpdateCategory(It.IsAny<Category>()), Times.Never);
-        //}
-        //[Test]
-        //public async Task DeleteCategory_NonExistentCategory_ReturnsNotFound()
-        //{
-        //    // Arrange
-        //    var categoryRepositoryMock = new Mock<ICategoryRepository>();
-        //    var controller = new CategoryController(categoryRepositoryMock.Object);
-        //    var categoryIdToDelete = -1;
-
-        //    // Act
-        //    var result = await controller.DeleteCategory(categoryIdToDelete) as NotFoundResult;
-
-        //    // Assert
-        //    Assert.That(result, Is.Not.Null);
-        //    Assert.That(result.StatusCode, Is.EqualTo(404));
-        //    categoryRepositoryMock.Verify(repo => repo.DeleteCategory(It.IsAny<int>()), Times.Never);
-        //}
-
-
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.StatusCode, Is.EqualTo(400));
+            categoryRepositoryMock.Verify(repo => repo.InsertCategory(It.IsAny<Category>()), Times.Never);
+        }       
+       
     }
 }

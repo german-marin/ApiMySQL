@@ -1,6 +1,7 @@
 ﻿using ApiMySQL.Repositories;
 using ApiMySQL.Model;
 using Microsoft.AspNetCore.Mvc;
+using MySqlX.XDevAPI.Common;
 
 namespace ApiMySQL.Controllers
 {
@@ -23,17 +24,20 @@ namespace ApiMySQL.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCategory(int id)
         {
-            return Ok(await _categoryRepository.GetCategory(id));
+            return Ok(await _categoryRepository.GetCategory(id));            
         }
 
         [HttpPost]
         public async Task<IActionResult> InsertCategory([FromBody] Category category)
         {
+
             if (category == null)
                 return BadRequest();
 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+            if (category.IdMuscleGroup == 0)
+                return BadRequest();
 
             var created = await _categoryRepository.InsertCategory(category);
             return Created("created", created);
@@ -53,11 +57,11 @@ namespace ApiMySQL.Controllers
             return NoContent();
 
         }
-        [HttpDelete]
+        [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
-        {
+        {           
             await _categoryRepository.DeleteCategory(id);
             return NoContent();
-        }
+        }        
     }
 }
