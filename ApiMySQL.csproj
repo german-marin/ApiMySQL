@@ -5,6 +5,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <UserSecretsId>13d28a99-bb66-4548-b655-c0d1a0fb1797</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <DockerfileContext>.</DockerfileContext>
   </PropertyGroup>
 
 
@@ -12,6 +15,7 @@
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.1.21" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
     <PackageReference Include="Moq" Version="4.20.70" />
     <PackageReference Include="MySql.Data" Version="8.2.0" />
     <PackageReference Include="NUnit" Version="3.14.0" />

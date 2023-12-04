@@ -29,7 +29,17 @@ namespace ApiMySQL.Repositories
             return await db.QueryFirstOrDefaultAsync<Training>(sql, new { Id = id });
         }
 
-        public async Task<int> InsertTraining(Training training)
+        public async Task<IEnumerable<Training>> GetAllTrainings()
+        {
+            var db = DbConnection();
+
+            var sql = @"SELECT ID_entrenamiento as ID, ID_entrenamiento as ID, descripcion as Description, 
+                        fecha_ini as StartDate, fecha_fin as EndDate, ID_cliente_FK as IdClient, notas as Notes
+                        FROM entrenamiento";
+
+            return await db.QueryAsync<Training>(sql, new { });
+        }
+            public async Task<int> InsertTraining(Training training)
         {
             var db = DbConnection();
 

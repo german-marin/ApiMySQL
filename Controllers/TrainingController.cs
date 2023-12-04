@@ -15,12 +15,13 @@ namespace ApiMySQL.Controllers
         {
             _trainingRepository = trainingRepository;
         }
+        
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTraining(int id)
         {
             return Ok(await _trainingRepository.GetTraining(id));
         }
-      
+        [Route("InsertTraining")]
         [HttpPost]
         public async Task<IActionResult> InsertTraining([FromBody] Training training)
         {
@@ -34,7 +35,7 @@ namespace ApiMySQL.Controllers
             return Created("created", created);
 
         }
-
+        [Route("UpdateTraining")]
         [HttpPut]
         public async Task<IActionResult> UpdateTraining([FromBody] Training training)
         {
@@ -48,11 +49,24 @@ namespace ApiMySQL.Controllers
             return NoContent();
 
         }
-        [HttpDelete]
+        
+        [HttpDelete("DeleteTraining/{id}")]
         public async Task<IActionResult> DeleteTraining(int id)
         {
             await _trainingRepository.DeleteTraining(id);
             return NoContent();
+        }
+        [HttpGet("GetAllTrainings")]
+        public async Task<IActionResult> GetAllTrainings()
+        {
+            var trainings = await _trainingRepository.GetAllTrainings();
+
+            if (trainings == null || !trainings.Any())
+            {
+                return NoContent();
+            }
+
+            return Ok(trainings);
         }
 
     }

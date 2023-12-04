@@ -109,6 +109,53 @@ namespace ApiMySQL.Tests.Controllers
 
             var actualTraining = result.Value as Training;
             Assert.That(actualTraining, Is.EqualTo(expectedTraining));
+        }      
+            [Test]
+            public async Task GetAllTrainings_ReturnsOkResultWithTrainings()
+            {
+                // Arrange
+                var trainingRepositoryMock = new Mock<ITrainingRepository>();
+                var controller = new TrainingController(trainingRepositoryMock.Object);
+
+                var expectedTrainings = new List<Training>
+        {
+            new Training { ID = 1, Description = "Training 1", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(7), IdClient = 1, Notes = "Notes 1" },
+            new Training { ID = 2, Description = "Training 2", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(14), IdClient = 2, Notes = "Notes 2" }
+            // ... agregar más entrenamientos según sea necesario
+        };
+
+                trainingRepositoryMock.Setup(repo => repo.GetAllTrainings())
+                    .ReturnsAsync(expectedTrainings);
+
+                // Act
+                var result = await controller.GetAllTrainings() as OkObjectResult;
+
+                // Assert
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result.StatusCode, Is.EqualTo(200));
+
+                var actualTrainings = result.Value as IEnumerable<Training>;
+                Assert.That(actualTrainings, Is.Not.Null);
+                Assert.That(actualTrainings, Is.EquivalentTo(expectedTrainings));
+            }
+
+            [Test]
+            public async Task GetAllTrainings_ReturnsNoContentWhenNoTrainings()
+            {
+                // Arrange
+                var trainingRepositoryMock = new Mock<ITrainingRepository>();
+                var controller = new TrainingController(trainingRepositoryMock.Object);
+
+                // No se configura el mock para devolver entrenamientos, simula el escenario de que no hay entrenamientos en la base de datos.
+
+                // Act
+                var result = await controller.GetAllTrainings() as NoContentResult;
+
+                // Assert
+                Assert.That(result, Is.Not.Null);
+                Assert.That(result.StatusCode, Is.EqualTo(204));
+            }
         }
+
     }
-}
+
