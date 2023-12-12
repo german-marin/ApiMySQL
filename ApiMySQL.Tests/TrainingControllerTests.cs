@@ -72,13 +72,12 @@ namespace ApiMySQL.Tests.Controllers
             var trainingIdToDelete = 1;
 
             // Act
-            var result = await controller.DeleteTraining(trainingIdToDelete) as NoContentResult;
+            var result = await controller.DeleteTraining(trainingIdToDelete);
 
             // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.StatusCode, Is.EqualTo(204));
+            Assert.That(result, Is.TypeOf<OkObjectResult>());
 
-            trainingRepositoryMock.Verify(repo => repo.DeleteTraining(It.IsAny<int>()), Times.Once);
+            trainingRepositoryMock.Verify(repo => repo.DeleteTraining(trainingIdToDelete), Times.Once);
         }
 
         [Test]

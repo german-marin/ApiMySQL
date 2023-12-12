@@ -1,6 +1,6 @@
-﻿using ApiMySQL.Repositories;
-using ApiMySQL.Model;
+﻿using ApiMySQL.Model;
 using Microsoft.AspNetCore.Mvc;
+using ApiMySQL.Repositories;
 
 namespace ApiMySQL.Controllers
 {
@@ -13,8 +13,8 @@ namespace ApiMySQL.Controllers
         public ExerciseController(IExerciseRepository exerciseRepository)
         {
             _exerciseRepository = exerciseRepository;
-        }
-        [HttpGet]
+        }   
+        [HttpGet("GetCategoryExercises")]
         public async Task<IActionResult> GetCategoryExercises(int id)
         {
             return Ok(await _exerciseRepository.GetCategoryExercises(id));

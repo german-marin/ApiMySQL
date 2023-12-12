@@ -23,9 +23,9 @@ namespace ApiMySQL.Repositories
         {
             var db = DbConnection();
 
-            var sql = @"SELECT ID_lineas as ID, ID_ejercicio_FK as IdExercise, ID_entrenamiento_FK as IdTraining
+            var sql = @"SELECT ID_lineas as ID, ID_ejercicio_FK as IdExercise, ID_entrenamiento_FK as IdTraining,
                                series as Series, repeticiones as Repetition, pesos as Weight, recuperacion as Recovery, 
-                               otros as Weight, notas as Notes
+                               otros as Others, notas as Notes
                         FROM lineas_entrenamiento
                         WHERE ID_entrenamiento_FK = @Id ";
 
@@ -37,7 +37,7 @@ namespace ApiMySQL.Repositories
             var db = DbConnection();
             var sql = @"SELECT ID_lineas as ID, ID_ejercicio_FK as IdExercise, ID_entrenamiento_FK as IdTraining,
                                series as Series, repeticiones as Repetition, pesos as Weight, recuperacion as Recovery, 
-                               otros as Weight, notas as Notes
+                               otros as Others, notas as Notes
                         FROM lineas_entrenamiento
                         WHERE ID_lineas = @Id ";
 
@@ -69,7 +69,7 @@ namespace ApiMySQL.Repositories
                                repeticiones = @Repetition,
                                pesos = @Weight,
                                recuperacion = @Recovery,
-                               otros = @Weight,
+                               otros = @Others,
                                notas = @Notes,
                                f_ult_act = CURRENT_TIMESTAMP
                          WHERE ID_lineas = @Id ";

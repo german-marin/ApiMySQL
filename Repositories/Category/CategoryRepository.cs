@@ -18,11 +18,11 @@ namespace ApiMySQL.Repositories
         {
             return new MySqlConnection(_connectionString.ConnectionString);
         }
-               
+
         public async Task<IEnumerable<Category>> GetMuscleGroupCategories(int id)
         {
             var db = DbConnection();
-            
+
             var sql = @"SELECT ID_categoria as ID, Descripcion as Description, ID_grupo_muscular_FK as IdMuscleGroup
                         FROM categoria
                         WHERE ID_grupo_muscular_FK = @Id ";

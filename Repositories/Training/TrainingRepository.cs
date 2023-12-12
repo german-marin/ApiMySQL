@@ -78,6 +78,18 @@ namespace ApiMySQL.Repositories
 
             return result > 0;
         }
-        
+        public async Task<bool> DeleteTrainingAndTrainingLines(int id)
+        {
+            var db = DbConnection();
+
+            var sql = @"DELETE FROM lineas_entrenamiento
+                              WHERE ID_entrenamiento_FK = @Id; 
+                        DELETE FROM entrenamiento
+                        WHERE ID_entrenamiento = @Id";
+
+            var result = await db.ExecuteAsync(sql, new { Id = id });
+
+            return result > 0;
+        }
     }
 }

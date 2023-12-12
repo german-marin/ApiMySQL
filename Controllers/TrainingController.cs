@@ -49,13 +49,34 @@ namespace ApiMySQL.Controllers
             return NoContent();
 
         }
-        
-        [HttpDelete("DeleteTraining/{id}")]
+        [HttpDelete]
         public async Task<IActionResult> DeleteTraining(int id)
         {
-            await _trainingRepository.DeleteTraining(id);
-            return NoContent();
+            try
+            {
+                await _trainingRepository.DeleteTraining(id);
+                return Ok(true); // Devuelve true si la eliminación fue exitosa
+            }
+            catch
+            {
+                return BadRequest(false); // Devuelve false si hubo un error
+            }
         }
+        [HttpDelete("DeleteTrainingAndTrainingLines")]
+        public async Task<IActionResult> DeleteTrainingAndTrainingLines(int id)
+        {
+            try
+            {
+                await _trainingRepository.DeleteTrainingAndTrainingLines(id);
+                return Ok(true); // Devuelve true si la eliminación fue exitosa
+            }
+            catch
+            {
+                return BadRequest(false); // Devuelve false si hubo un error
+            }
+        }
+    
+
         [HttpGet("GetAllTrainings")]
         public async Task<IActionResult> GetAllTrainings()
         {

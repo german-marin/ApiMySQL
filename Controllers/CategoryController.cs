@@ -1,7 +1,7 @@
-﻿using ApiMySQL.Repositories;
-using ApiMySQL.Model;
+﻿using ApiMySQL.Model;
 using Microsoft.AspNetCore.Mvc;
 using MySqlX.XDevAPI.Common;
+using ApiMySQL.Repositories;
 
 namespace ApiMySQL.Controllers
 {

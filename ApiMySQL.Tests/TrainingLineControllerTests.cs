@@ -78,13 +78,12 @@ namespace ApiMySQL.Tests.Controllers
             var trainingLineIdToDelete = 1;
 
             // Act
-            var result = await controller.DeleteTrainingLine(trainingLineIdToDelete) as NoContentResult;
+            var result = await controller.DeleteTrainingLine(trainingLineIdToDelete);
 
             // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.StatusCode, Is.EqualTo(204));
+            Assert.That(result, Is.TypeOf<OkObjectResult>());
 
-            trainingLineRepositoryMock.Verify(repo => repo.DeleteTrainingLine(It.IsAny<int>()), Times.Once);
+            trainingLineRepositoryMock.Verify(repo => repo.DeleteTrainingLine(trainingLineIdToDelete), Times.Once);
         }
 
         [Test]

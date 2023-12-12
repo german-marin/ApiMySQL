@@ -14,7 +14,7 @@ namespace ApiMySQL.Controllers
         {
             _trainingLineRepository = trainingLineRepository;
         }
-        [HttpGet]
+        [HttpGet("GetTrainingLinesOfTraining")]
         public async Task<IActionResult> GetTrainingLinesOfTraining(int id)
         {
             return Ok(await _trainingLineRepository.GetTrainingLinesOfTraining(id));
@@ -56,8 +56,16 @@ namespace ApiMySQL.Controllers
         [HttpDelete]
         public async Task<IActionResult> DeleteTrainingLine(int id)
         {
-            await _trainingLineRepository.DeleteTrainingLine(id);
-            return NoContent();
+            try
+            {
+                await _trainingLineRepository.DeleteTrainingLine(id);
+                return Ok(true); // Devuelve true si la eliminación fue exitosa
+            }
+            catch
+            {
+                // Loggea el error o maneja la excepción según sea necesario
+                return BadRequest(false); // Devuelve false si hubo un error
+            }
         }
     }
 }
