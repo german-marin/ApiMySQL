@@ -16,7 +16,8 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var trainingLineRepositoryMock = new Mock<ITrainingLineRepository>();
-            var controller = new TrainingLineController(trainingLineRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<TrainingLineController>>();
+            var controller = new TrainingLineController(trainingLineRepositoryMock.Object, loggerMock.Object);
             var trainingLineToInsert = new TrainingLine
             {
                 ID = 1,
@@ -45,7 +46,8 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var trainingLineRepositoryMock = new Mock<ITrainingLineRepository>();
-            var controller = new TrainingLineController(trainingLineRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<TrainingLineController>>();
+            var controller = new TrainingLineController(trainingLineRepositoryMock.Object, loggerMock.Object);
             var trainingLineToUpdate = new TrainingLine
             {
                 ID = 1,
@@ -58,6 +60,8 @@ namespace ApiMySQL.Tests.Controllers
                 Others = "Updated Others",
                 Notes = "Updated Notes"
             };
+            // Configurar el comportamiento del mock para devolver un Training vacío
+            trainingLineRepositoryMock.Setup(repo => repo.GetTrainingLine(trainingLineToUpdate.ID)).ReturnsAsync(new TrainingLine());
 
             // Act
             var result = await controller.UpdateTrainingLine(trainingLineToUpdate) as NoContentResult;
@@ -74,8 +78,12 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var trainingLineRepositoryMock = new Mock<ITrainingLineRepository>();
-            var controller = new TrainingLineController(trainingLineRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<TrainingLineController>>();
+            var controller = new TrainingLineController(trainingLineRepositoryMock.Object, loggerMock.Object);
             var trainingLineIdToDelete = 1;
+
+            // Configurar el comportamiento del mock para devolver un Training vacío
+            trainingLineRepositoryMock.Setup(repo => repo.GetTrainingLine(trainingLineIdToDelete)).ReturnsAsync(new TrainingLine());
 
             // Act
             var result = await controller.DeleteTrainingLine(trainingLineIdToDelete);
@@ -91,7 +99,8 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var trainingLineRepositoryMock = new Mock<ITrainingLineRepository>();
-            var controller = new TrainingLineController(trainingLineRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<TrainingLineController>>();
+            var controller = new TrainingLineController(trainingLineRepositoryMock.Object, loggerMock.Object);
             var expectedTrainingLine = new TrainingLine
             {
                 ID = 1,
@@ -124,7 +133,8 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var trainingLineRepositoryMock = new Mock<ITrainingLineRepository>();
-            var controller = new TrainingLineController(trainingLineRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<TrainingLineController>>();
+            var controller = new TrainingLineController(trainingLineRepositoryMock.Object, loggerMock.Object);
             var expectedTrainingLines = new List<TrainingLine>
             {
                 new TrainingLine { ID = 1, IdExercise = 1, IdTraining = 1 },

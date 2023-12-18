@@ -10,5 +10,6 @@ namespace ApiMySQL.Repositories
         Task<bool> UpdateTraining(Training training);
         Task<bool> DeleteTraining(int id);
         Task<bool> DeleteTrainingAndTrainingLines(int id);
+        Task<bool> ExistClient(int id);
     }
 }

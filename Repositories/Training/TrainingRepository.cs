@@ -91,5 +91,18 @@ namespace ApiMySQL.Repositories
 
             return result > 0;
         }
+        public async Task<bool> ExistClient(int id)
+        {
+            var db = DbConnection();
+
+            var sql = @"SELECT count(1)
+                        FROM entrenamiento
+                        WHERE ID_entrenamiento = @Id ";
+
+            var result = await db.ExecuteAsync(sql, new { Id = id });
+
+            return result > 0;
+        }
+
     }
 }
