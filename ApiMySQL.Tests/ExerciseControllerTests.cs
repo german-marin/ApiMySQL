@@ -16,7 +16,8 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var exerciseRepositoryMock = new Mock<IExerciseRepository>();
-            var controller = new ExerciseController(exerciseRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<ExerciseController>>();
+            var controller = new ExerciseController(exerciseRepositoryMock.Object, loggerMock.Object);
             var exerciseToInsert = new Exercise
             {
                 ID = 1,
@@ -40,8 +41,13 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var exerciseRepositoryMock = new Mock<IExerciseRepository>();
-            var controller = new ExerciseController(exerciseRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<ExerciseController>>();
+            var controller = new ExerciseController(exerciseRepositoryMock.Object, loggerMock.Object);
             var exerciseToUpdate = new Exercise { ID = 1, Description = "Updated Exercise", IdCategory = 1, Image = "updated.jpg" };
+
+            var existingExercise = new Exercise { ID = 1, Description = "Test Exercise", IdCategory = 1, Image = "image.jpg" };
+            exerciseRepositoryMock.Setup(repo => repo.GetExercise(It.IsAny<int>()))
+                .ReturnsAsync(existingExercise);
 
             // Act
             var result = await controller.UpdateExercise(exerciseToUpdate) as NoContentResult;
@@ -50,6 +56,7 @@ namespace ApiMySQL.Tests.Controllers
             Assert.That(result, Is.Not.Null);
             Assert.That(result.StatusCode, Is.EqualTo(204));
 
+            exerciseRepositoryMock.Verify(repo => repo.GetExercise(It.IsAny<int>()), Times.Once);
             exerciseRepositoryMock.Verify(repo => repo.UpdateExercise(It.IsAny<Exercise>()), Times.Once);
         }
 
@@ -58,7 +65,8 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var exerciseRepositoryMock = new Mock<IExerciseRepository>();
-            var controller = new ExerciseController(exerciseRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<ExerciseController>>();
+            var controller = new ExerciseController(exerciseRepositoryMock.Object, loggerMock.Object);
             var expectedExercise = new Exercise { ID = 1, Description = "Test Exercise", IdCategory = 1, Image = "image.jpg" };
 
             exerciseRepositoryMock.Setup(repo => repo.GetExercise(It.IsAny<int>()))
@@ -80,7 +88,8 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var exerciseRepositoryMock = new Mock<IExerciseRepository>();
-            var controller = new ExerciseController(exerciseRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<ExerciseController>>();
+            var controller = new ExerciseController(exerciseRepositoryMock.Object, loggerMock.Object);
             var expectedExercises = new List<Exercise>
             {
                 new Exercise { ID = 1, Description = "Exercise 1", IdCategory = 1, Image = "image1.jpg" },
@@ -106,8 +115,13 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var exerciseRepositoryMock = new Mock<IExerciseRepository>();
-            var controller = new ExerciseController(exerciseRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<ExerciseController>>();
+            var controller = new ExerciseController(exerciseRepositoryMock.Object, loggerMock.Object);
             var exerciseIdToDelete = 1;
+
+            var existingExercise = new Exercise { ID = 1, Description = "Test Exercise", IdCategory = 1, Image = "image.jpg" };
+            exerciseRepositoryMock.Setup(repo => repo.GetExercise(It.IsAny<int>()))
+                .ReturnsAsync(existingExercise);
 
             // Act
             var result = await controller.DeleteExercise(exerciseIdToDelete) as NoContentResult;
@@ -116,6 +130,7 @@ namespace ApiMySQL.Tests.Controllers
             Assert.That(result, Is.Not.Null);
             Assert.That(result.StatusCode, Is.EqualTo(204));
 
+            exerciseRepositoryMock.Verify(repo => repo.GetExercise(It.IsAny<int>()), Times.Once);
             exerciseRepositoryMock.Verify(repo => repo.DeleteExercise(It.IsAny<int>()), Times.Once);
         }
     }

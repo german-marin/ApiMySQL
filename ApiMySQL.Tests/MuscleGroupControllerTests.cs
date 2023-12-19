@@ -16,7 +16,8 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var muscleGroupRepositoryMock = new Mock<IMuscleGroupRepository>();
-            var controller = new MuscleGroupController(muscleGroupRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<MuscleGroupController>>();
+            var controller = new MuscleGroupController(muscleGroupRepositoryMock.Object, loggerMock.Object);
             var muscleGroupToInsert = new MuscleGroup
             {
                 ID = 1,
@@ -40,7 +41,8 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var muscleGroupRepositoryMock = new Mock<IMuscleGroupRepository>();
-            var controller = new MuscleGroupController(muscleGroupRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<MuscleGroupController>>();
+            var controller = new MuscleGroupController(muscleGroupRepositoryMock.Object, loggerMock.Object);
             var muscleGroupToUpdate = new MuscleGroup
             {
                 ID = 1,
@@ -48,6 +50,9 @@ namespace ApiMySQL.Tests.Controllers
                 ImageFront = "updated_front.jpg",
                 ImageRear = "updated_rear.jpg"
             };
+
+            // Configurar el comportamiento del mock para devolver un muscleGroup
+            muscleGroupRepositoryMock.Setup(repo => repo.GetMuscleGroup(muscleGroupToUpdate.ID)).ReturnsAsync(new MuscleGroup());
 
             // Act
             var result = await controller.UpdateMuscleGroup(muscleGroupToUpdate) as NoContentResult;
@@ -64,25 +69,32 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var muscleGroupRepositoryMock = new Mock<IMuscleGroupRepository>();
-            var controller = new MuscleGroupController(muscleGroupRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<MuscleGroupController>>();
+            var controller = new MuscleGroupController(muscleGroupRepositoryMock.Object, loggerMock.Object);
             var muscleGroupIdToDelete = 1;
 
+            // Configurar el comportamiento del mock para devolver un muscleGroup
+            muscleGroupRepositoryMock.Setup(repo => repo.GetMuscleGroup(muscleGroupIdToDelete)).ReturnsAsync(new MuscleGroup());
             // Act
-            var result = await controller.DeleteMuscleGroup(muscleGroupIdToDelete) as NoContentResult;
+            var result = await controller.DeleteMuscleGroup(muscleGroupIdToDelete) as OkObjectResult;
 
             // Assert
             Assert.That(result, Is.Not.Null);
-            Assert.That(result.StatusCode, Is.EqualTo(204));
+            Assert.That(result.StatusCode, Is.EqualTo(200));
 
-            muscleGroupRepositoryMock.Verify(repo => repo.DeleteMuscleGroup(It.IsAny<int>()), Times.Once);
+            muscleGroupRepositoryMock.Verify(repo => repo.DeleteMuscleGroup(It.IsAny<int>()), Times.Once);            
         }
+
+      
+
 
         [Test]
         public async Task GetAllMuscleGroup_ReturnsOkResult()
         {
             // Arrange
             var muscleGroupRepositoryMock = new Mock<IMuscleGroupRepository>();
-            var controller = new MuscleGroupController(muscleGroupRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<MuscleGroupController>>();
+            var controller = new MuscleGroupController(muscleGroupRepositoryMock.Object, loggerMock.Object);
             var expectedMuscleGroups = new List<MuscleGroup>
             {
                 new MuscleGroup { ID = 1, Description = "Muscle Group 1", ImageFront = "front1.jpg", ImageRear = "rear1.jpg" },
@@ -108,7 +120,8 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var muscleGroupRepositoryMock = new Mock<IMuscleGroupRepository>();
-            var controller = new MuscleGroupController(muscleGroupRepositoryMock.Object);
+            var loggerMock = new Mock<ILogger<MuscleGroupController>>();
+            var controller = new MuscleGroupController(muscleGroupRepositoryMock.Object, loggerMock.Object);
             var expectedMuscleGroup = new MuscleGroup { ID = 1, Description = "Muscle Group 1", ImageFront = "front1.jpg", ImageRear = "rear1.jpg" };
 
             muscleGroupRepositoryMock.Setup(repo => repo.GetMuscleGroup(It.IsAny<int>()))

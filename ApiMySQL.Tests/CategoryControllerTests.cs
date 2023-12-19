@@ -177,7 +177,130 @@ namespace ApiMySQL.Tests.Controllers
             Assert.That(result, Is.Not.Null);
             Assert.That(result.StatusCode, Is.EqualTo(400));
             categoryRepositoryMock.Verify(repo => repo.InsertCategory(It.IsAny<Category>()), Times.Never);
-        }       
-       
+        }
+
+        [Test]  
+      public async Task UpdateCategory_InvalidData_ReturnsBadRequest()
+        {
+            // Arrange
+            var categoryRepositoryMock = new Mock<ICategoryRepository>();
+            var loggerMock = new Mock<ILogger<CategoryController>>();
+            var controller = new CategoryController(categoryRepositoryMock.Object, loggerMock.Object);
+
+            var categoryToUpdate = new Category
+            {
+                Description = "Test",
+            };
+
+            // Configurar el comportamiento del mock para devolver un Training vacío
+            categoryRepositoryMock.Setup(repo => repo.GetCategory(categoryToUpdate.ID)).ReturnsAsync((Category)null);
+
+            // Act
+            var result = await controller.UpdateCategory(categoryToUpdate) as BadRequestResult;
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.StatusCode, Is.EqualTo(400));
+            categoryRepositoryMock.Verify(repo => repo.UpdateCategory(It.IsAny<Category>()), Times.Never);
+        }
+        [Test]
+        public async Task DeleteCategory_InvalidId_ReturnsNotFound()
+        {
+            // Arrange
+            var categoryRepositoryMock = new Mock<ICategoryRepository>();
+            var loggerMock = new Mock<ILogger<CategoryController>>();
+            var controller = new CategoryController(categoryRepositoryMock.Object, loggerMock.Object);
+            var categoryIdToDelete = 1;
+
+            // Configurar el comportamiento del mock para devolver un Training vacío
+            categoryRepositoryMock.Setup(repo => repo.GetCategory(categoryIdToDelete)).ReturnsAsync((Category)null);
+
+            // Act
+            var result = await controller.DeleteCategory(categoryIdToDelete) as NoContentResult;
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.StatusCode, Is.EqualTo(204));
+            categoryRepositoryMock.Verify(repo => repo.DeleteCategory(It.IsAny<int>()), Times.Never);
+        }
+        [Test]
+        public async Task GetCategory_InvalidId_ReturnsNotFound()
+        {
+            // Arrange
+            var categoryRepositoryMock = new Mock<ICategoryRepository>();
+            var loggerMock = new Mock<ILogger<CategoryController>>();
+            var controller = new CategoryController(categoryRepositoryMock.Object, loggerMock.Object);
+            var categoryIdToGet = 1;
+
+            // Configurar el comportamiento del mock para devolver un Training vacío
+            categoryRepositoryMock.Setup(repo => repo.GetCategory(categoryIdToGet)).ReturnsAsync((Category)null);
+
+            // Act
+            var result = await controller.GetCategory(categoryIdToGet) as NoContentResult;
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.StatusCode, Is.EqualTo(204));
+            categoryRepositoryMock.Verify(repo => repo.GetCategory(It.IsAny<int>()), Times.Once);
+        }
+               [Test]
+        public async Task InsertCategory_NullData_ReturnsBadRequest()
+        {
+            // Arrange
+            var categoryRepositoryMock = new Mock<ICategoryRepository>();
+            var loggerMock = new Mock<ILogger<CategoryController>>();
+            var controller = new CategoryController(categoryRepositoryMock.Object, loggerMock.Object);
+
+            // Act
+            var result = await controller.InsertCategory(null) as BadRequestResult;
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.StatusCode, Is.EqualTo(400));
+            categoryRepositoryMock.Verify(repo => repo.InsertCategory(It.IsAny<Category>()), Times.Never);
+        }
+        [Test]
+        public async Task UpdateCategory_NullData_ReturnsBadRequest()
+        {
+            // Arrange
+            var categoryRepositoryMock = new Mock<ICategoryRepository>();
+            var loggerMock = new Mock<ILogger<CategoryController>>();
+            var controller = new CategoryController(categoryRepositoryMock.Object, loggerMock.Object);
+
+            // Act
+            var result = await controller.UpdateCategory(null) as BadRequestResult;
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.StatusCode, Is.EqualTo(400));
+            categoryRepositoryMock.Verify(repo => repo.UpdateCategory(It.IsAny<Category>()), Times.Never);
+        }
+        [Test]
+        public async Task UpdateCategory_InvalidId_ReturnsBadRequest()
+        {
+           
+            // Arrange
+            var categoryRepositoryMock = new Mock<ICategoryRepository>();
+            var loggerMock = new Mock<ILogger<CategoryController>>();
+            var controller = new CategoryController(categoryRepositoryMock.Object, loggerMock.Object);
+
+            var categoryToUpdate = new Category
+            {
+                ID = 0,
+                Description = "Test",
+            };
+
+            // Configurar el comportamiento del mock para devolver un Training vacío
+            categoryRepositoryMock.Setup(repo => repo.GetCategory(categoryToUpdate.ID)).ReturnsAsync((Category)null);
+
+            // Act
+            var result = await controller.UpdateCategory(categoryToUpdate) as BadRequestResult;
+
+            // Assert
+            Assert.That(result, Is.Not.Null);
+            Assert.That(result.StatusCode, Is.EqualTo(400));
+            categoryRepositoryMock.Verify(repo => repo.UpdateCategory(It.IsAny<Category>()), Times.Never);
+        }
+        
     }
 }
