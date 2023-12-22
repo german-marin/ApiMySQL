@@ -1,108 +1,85 @@
 ﻿using ApiMySQL.Data;
 using ApiMySQL.Model;
-using Dapper;
-using MySql.Data.MySqlClient;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
 namespace ApiMySQL.Repositories
 {
     public class TrainingRepository : ITrainingRepository
     {
-        private readonly MySQLConfiguration _connectionString;
+        private readonly ApplicationDbContext _context;
 
-        public TrainingRepository(MySQLConfiguration connectionString)
+        public TrainingRepository(ApplicationDbContext context)
         {
-            _connectionString = connectionString;
+            _context = context;
         }
-
-        protected MySqlConnection DbConnection()
-        {
-            return new MySqlConnection(_connectionString.ConnectionString);
-        }   
 
         public async Task<Training> GetTraining(int id)
         {
-            var db = DbConnection();
-            var sql = @"SELECT ID_entrenamiento as ID, descripcion as Description, 
-                        fecha_ini as StartDate, fecha_fin as EndDate, ID_cliente_FK as IdClient, notas as Notes
-                        FROM entrenamiento
-                        WHERE ID_entrenamiento = @Id ";
-
-            return await db.QueryFirstOrDefaultAsync<Training>(sql, new { Id = id });
+            return await _context.Trainings
+                .Where(t => t.ID == id)
+                .FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<Training>> GetAllTrainings()
         {
-            var db = DbConnection();
-
-            var sql = @"SELECT ID_entrenamiento as ID, ID_entrenamiento as ID, descripcion as Description, 
-                        fecha_ini as StartDate, fecha_fin as EndDate, ID_cliente_FK as IdClient, notas as Notes
-                        FROM entrenamiento";
-
-            return await db.QueryAsync<Training>(sql, new { });
+            return await _context.Trainings.ToListAsync();
         }
-            public async Task<int> InsertTraining(Training training)
+
+        public async Task<int> InsertTraining(Training training)
         {
-            var db = DbConnection();
-
-            var sql = @"INSERT INTO entrenamiento(descripcion, fecha_ini, fecha_fin, ID_cliente_FK, notas, f_ult_act)
-                       VALUES(@Description, @StartDate, @EndDate, @IdClient, @Notes, CURRENT_TIMESTAMP);
-                       SELECT LAST_INSERT_ID();";
-
-
-            return await db.QueryFirstOrDefaultAsync<int>(sql, new { training.Description, training.StartDate, training.EndDate, training.IdClient, training.Notes });
+            _context.Trainings.Add(training);
+            await _context.SaveChangesAsync();
+            return training.ID;
         }
 
         public async Task<bool> UpdateTraining(Training training)
         {
-            var db = DbConnection();
-
-            var sql = @"UPDATE entrenamiento
-                          SET  descripcion = @Description, 
-                               fecha_ini = @StartDate, 
-                               fecha_fin = @EndDate, 
-                               ID_cliente_FK = @IdClient, 
-                               notas = @Notes, 
-                               f_ult_act = CURRENT_TIMESTAMP
-                         WHERE ID_entrenamiento = @Id ";
-
-            var result = await db.ExecuteAsync(sql, new { training.Description, training.StartDate, training.EndDate, training.IdClient, training.Notes, Id = training.ID });
-
-            return result > 0;
+            _context.Entry(training).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return true;
         }
+
         public async Task<bool> DeleteTraining(int id)
         {
-            var db = DbConnection();
+            var training = await _context.Trainings.FindAsync(id);
+            if (training == null)
+            {
+                return false;
+            }
 
-            var sql = @"DELETE FROM entrenamiento
-                        WHERE ID_entrenamiento = @Id ";
-            var result = await db.ExecuteAsync(sql, new { Id = id });
-
-            return result > 0;
+            _context.Trainings.Remove(training);
+            await _context.SaveChangesAsync();
+            return true;
         }
+
         public async Task<bool> DeleteTrainingAndTrainingLines(int id)
         {
-            var db = DbConnection();
+            var training = await _context.Trainings.FindAsync(id);
+            if (training == null)
+            {
+                return false;
+            }
 
-            var sql = @"DELETE FROM lineas_entrenamiento
-                              WHERE ID_entrenamiento_FK = @Id; 
-                        DELETE FROM entrenamiento
-                        WHERE ID_entrenamiento = @Id";
+            var trainingLines = await _context.TrainingLines
+                .Where(tl => tl.TrainingID == id)
+                .ToListAsync();
 
-            var result = await db.ExecuteAsync(sql, new { Id = id });
+            _context.TrainingLines.RemoveRange(trainingLines);
+            _context.Trainings.Remove(training);
 
-            return result > 0;
+            await _context.SaveChangesAsync();
+
+            return true;
         }
-        public async Task<bool> ExistClient(int id)
+
+        public async Task<bool> CustomerExist(int id)
         {
-            var db = DbConnection();
+            var exists = await _context.Customers.AnyAsync(customer => customer.ID == id);
 
-            var sql = @"SELECT count(1)
-                        FROM entrenamiento
-                        WHERE ID_entrenamiento = @Id ";
-
-            var result = await db.ExecuteAsync(sql, new { Id = id });
-
-            return result > 0;
+            return exists;
         }
-
     }
 }

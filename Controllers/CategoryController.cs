@@ -138,7 +138,7 @@ namespace ApiMySQL.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                if (category.IdMuscleGroup == 0)
+                if (category.MuscleGroupID == 0)
                 {
                     _logger.LogError("****Error en la operación InsertCategory, no existe el grupo muscular");
                     return BadRequest();

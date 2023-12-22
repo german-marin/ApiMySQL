@@ -111,8 +111,9 @@ namespace ApiMySQL.Controllers
         /// Sample request:
         /// 
         ///     {
-        ///      "name": "Nuevo Ejercicio",
-        ///      "categoryId": 1
+        ///      "description": "string",
+        ///      "categoryID": 1,
+        ///      "image": "imagen_del_ejercicio"
         ///     }
         ///     
         /// </remarks>
@@ -156,7 +157,8 @@ namespace ApiMySQL.Controllers
         ///     {
         ///      "id": 4,
         ///      "name": "Ejercicio Actualizado",
-        ///      "categoryId": 1
+        ///      "categoryId": 1,
+        ///      "image": "imagen_del_ejercicio"
         ///     }
         ///     
         /// </remarks>

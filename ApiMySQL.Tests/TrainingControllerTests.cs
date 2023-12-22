@@ -16,7 +16,7 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var trainingRepositoryMock = new Mock<ITrainingRepository>();
-            trainingRepositoryMock.Setup(repo => repo.ExistClient(It.IsAny<int>())).ReturnsAsync(true);
+            trainingRepositoryMock.Setup(repo => repo.CustomerExist(It.IsAny<int>())).ReturnsAsync(true);
             var loggerMock = new Mock<ILogger<TrainingController>>();
             var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object);
             var trainingToInsert = new Training
@@ -25,7 +25,7 @@ namespace ApiMySQL.Tests.Controllers
                 Description = "Test Training",
                 StartDate = DateTime.Now,
                 EndDate = DateTime.Now.AddDays(7),
-                IdClient = 1,
+                CustomerID = 1,
                 Notes = "Test Notes"
             };
 
@@ -44,7 +44,7 @@ namespace ApiMySQL.Tests.Controllers
         {
             // Arrange
             var trainingRepositoryMock = new Mock<ITrainingRepository>();
-            trainingRepositoryMock.Setup(repo => repo.ExistClient(It.IsAny<int>())).ReturnsAsync(true);
+            trainingRepositoryMock.Setup(repo => repo.CustomerExist(It.IsAny<int>())).ReturnsAsync(true);
             var loggerMock = new Mock<ILogger<TrainingController>>();
             var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object);
             var trainingToUpdate = new Training
@@ -53,7 +53,7 @@ namespace ApiMySQL.Tests.Controllers
                 Description = "Updated Training",
                 StartDate = DateTime.Now,
                 EndDate = DateTime.Now.AddDays(14),
-                IdClient = 2,
+                CustomerID = 2,
                 Notes = "Updated Notes"
             };
 
@@ -101,7 +101,7 @@ namespace ApiMySQL.Tests.Controllers
                 Description = "Test Training",
                 StartDate = DateTime.Now,
                 EndDate = DateTime.Now.AddDays(7),
-                IdClient = 1,
+                CustomerID = 1,
                 Notes = "Test Notes"
             };
 
@@ -129,8 +129,8 @@ namespace ApiMySQL.Tests.Controllers
 
             var expectedTrainings = new List<Training>
         {
-            new Training { ID = 1, Description = "Training 1", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(7), IdClient = 1, Notes = "Notes 1" },
-            new Training { ID = 2, Description = "Training 2", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(14), IdClient = 2, Notes = "Notes 2" }
+            new Training { ID = 1, Description = "Training 1", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(7), CustomerID = 1, Notes = "Notes 1" },
+            new Training { ID = 2, Description = "Training 2", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(14), CustomerID = 2, Notes = "Notes 2" }
             // ... agregar más entrenamientos según sea necesario
         };
 

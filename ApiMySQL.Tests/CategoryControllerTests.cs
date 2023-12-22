@@ -22,7 +22,7 @@ namespace ApiMySQL.Tests.Controllers
             {
                 ID = 1,
                 Description = "Test Category",
-                IdMuscleGroup = 1
+                MuscleGroupID = 1
             };
 
             // Act
@@ -41,7 +41,7 @@ namespace ApiMySQL.Tests.Controllers
             var categoryRepositoryMock = new Mock<ICategoryRepository>();
             var loggerMock = new Mock<ILogger<CategoryController>>();
             var controller = new CategoryController(categoryRepositoryMock.Object, loggerMock.Object);
-            var categoryToUpdate = new Category { ID = 1, Description = "Updated Category", IdMuscleGroup = 1 };
+            var categoryToUpdate = new Category { ID = 1, Description = "Updated Category", MuscleGroupID = 1 };
 
             // Configurar el comportamiento del mock para devolver un Training vacío
             categoryRepositoryMock.Setup(repo => repo.GetCategory(categoryToUpdate.ID)).ReturnsAsync(new Category());
@@ -93,8 +93,8 @@ namespace ApiMySQL.Tests.Controllers
             var controller = new CategoryController(categoryRepositoryMock.Object, loggerMock.Object);
             var expectedCategories = new List<Category>
             {
-                new Category { ID = 1, Description = "Category 1", IdMuscleGroup = 1 },
-                new Category { ID = 2, Description = "Category 2", IdMuscleGroup = 1 },
+                new Category { ID = 1, Description = "Category 1", MuscleGroupID = 1 },
+                new Category { ID = 2, Description = "Category 2", MuscleGroupID = 1 },
             };
 
 
@@ -118,7 +118,7 @@ namespace ApiMySQL.Tests.Controllers
             var categoryRepositoryMock = new Mock<ICategoryRepository>();
             var loggerMock = new Mock<ILogger<CategoryController>>();
             var controller = new CategoryController(categoryRepositoryMock.Object, loggerMock.Object);
-            var expectedCategory = new Category { ID = 1, Description = "Category 1", IdMuscleGroup = 1 };
+            var expectedCategory = new Category { ID = 1, Description = "Category 1", MuscleGroupID = 1 };
 
             categoryRepositoryMock.Setup(repo => repo.GetCategory(It.IsAny<int>()))
                 .ReturnsAsync(expectedCategory);
@@ -140,7 +140,7 @@ namespace ApiMySQL.Tests.Controllers
             var categoryRepositoryMock = new Mock<ICategoryRepository>();
             var loggerMock = new Mock<ILogger<CategoryController>>();
             var controller = new CategoryController(categoryRepositoryMock.Object, loggerMock.Object);
-            var expectedCategory = new Category { ID = 1, Description = "Test Category", IdMuscleGroup = 1 };
+            var expectedCategory = new Category { ID = 1, Description = "Test Category", MuscleGroupID = 1 };
 
             categoryRepositoryMock.Setup(repo => repo.GetCategory(It.IsAny<int>()))
                 .ReturnsAsync(expectedCategory);

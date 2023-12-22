@@ -1,37 +1,45 @@
 using ApiMySQL.Data;
 using ApiMySQL.Repositories;
 using Microsoft.OpenApi.Models;
+using System.IO;
 using System.Reflection;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
+
+// Configure Entity Framework with MySQL
+var serverVersion = new MySqlServerVersion(new Version(8, 0, 34));
+
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseMySql(builder.Configuration.GetConnectionString("MySQLConnection"), serverVersion));
+
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "RutinAPI", Version = "v1" });
-    //Set the comments path for the swagger JSON
+    // Set the comments path for the swagger JSON
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
 });
 
-// Configurar el sistema de logging con Serilog
-Log.Logger = new LoggerConfiguration()    
+// Configure the logging system with Serilog
+Log.Logger = new LoggerConfiguration()
     .WriteTo.File("logs/mylog-.txt", rollingInterval: RollingInterval.Day)
     .CreateLogger();
-//builder.Host.UseSerilog(); // Configurar Serilog como proveedor de logging
 
-// Configurar el sistema de logging
 builder.Services.AddLogging(loggingBuilder =>
 {
-    loggingBuilder.ClearProviders(); // Limpiar los proveedores predeterminados
-    loggingBuilder.AddSerilog(); // Añadir Serilog como proveedor de logging
+    loggingBuilder.ClearProviders(); // Clear default providers
+    loggingBuilder.AddSerilog(); // Add Serilog as a logging provider
 });
 
 var mySQLConfiguration = new MySQLConfiguration(builder.Configuration.GetConnectionString("MySQLConnection"));

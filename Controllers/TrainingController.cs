@@ -83,11 +83,18 @@ namespace ApiMySQL.Controllers
             try
             {
                 if (training == null)
+                {
+                    _logger.LogError("****Error en la operación InsertTraining. Training nulo");
                     return BadRequest();
+                }
+
                 if (!ModelState.IsValid)
+                {
+                    _logger.LogError("****Error en la operación InsertTraining. ModelState Invalid");
                     return BadRequest(ModelState);
+                }                    
                 //comprobamos si existe el cliente
-                if (await _trainingRepository.ExistClient(training.IdClient) is false)
+                if (await _trainingRepository.CustomerExist(training.CustomerID) is false)
                 {
                     _logger.LogInformation("****El cliente seleccionado no existe");
                     return BadRequest();
@@ -139,7 +146,7 @@ namespace ApiMySQL.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
                 //comprobamos si existe el cliente
-                if (await _trainingRepository.ExistClient(training.IdClient) is false)
+                if (await _trainingRepository.CustomerExist(training.CustomerID) is false)
                 {
                     _logger.LogInformation("****El cliente seleccionado no existe");
                     return BadRequest();

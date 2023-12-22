@@ -1,85 +1,56 @@
 ﻿using ApiMySQL.Data;
 using ApiMySQL.Model;
-using Dapper;
-using MySql.Data.MySqlClient;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ApiMySQL.Repositories
 {
     public class MuscleGroupRepository : IMuscleGroupRepository
+    {
+        private readonly ApplicationDbContext _context;
 
+        public MuscleGroupRepository(ApplicationDbContext context)
         {
-            private readonly MySQLConfiguration _connectionString;
+            _context = context;
+        }
 
-            public MuscleGroupRepository(MySQLConfiguration connectionString)
+        public async Task<IEnumerable<MuscleGroup>> GetAllMuscleGroup()
+        {
+            return await _context.MuscleGroups.ToListAsync();
+        }
+
+        public async Task<MuscleGroup> GetMuscleGroup(int id)
+        {
+            return await _context.MuscleGroups.FindAsync(id);
+        }
+
+        public async Task<bool> InsertMuscleGroup(MuscleGroup muscleGroup)
+        {
+            _context.MuscleGroups.Add(muscleGroup);
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> UpdateMuscleGroup(MuscleGroup muscleGroup)
+        {
+            _context.Entry(muscleGroup).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteMuscleGroup(int id)
+        {
+            var muscleGroup = await _context.MuscleGroups.FindAsync(id);
+            if (muscleGroup == null)
             {
-                _connectionString = connectionString;
+                return false;
             }
 
-            protected MySqlConnection DbConnection()
-            {
-                return new MySqlConnection(_connectionString.ConnectionString);
-            }
-
-            public async Task<bool> DeleteMuscleGroup(int id)
-            {
-                var db = DbConnection();
-
-                var sql = @"DELETE FROM grupo_muscular
-                        WHERE ID_grupo = @Id ";
-                var result = await db.ExecuteAsync(sql, new { Id = id });
-
-                return result > 0;
-            }
-
-            public async Task<IEnumerable<MuscleGroup>> GetAllMuscleGroup()
-            {
-              var db = DbConnection();
-            
-            //Averiguar otra manera de hacer esto sin tener que poner alias a las columnas
-                var sql = @"SELECT ID_grupo as ID, descripcion as Description, Imagen_frente as ImageFront, Imagen_trasera as ImageRear
-                        FROM grupo_muscular";
-
-                return await db.QueryAsync<MuscleGroup>(sql, new { });
-            }
-
-            public async Task<MuscleGroup> GetMuscleGroup(int id)
-            {
-                var db = DbConnection();
-            //Averiguar otra manera de hacer esto sin tener que poner alias a las columnas
-            var sql = @"SELECT ID_grupo as ID, descripcion as Description, Imagen_frente as ImageFront, Imagen_trasera as ImageRear
-                        FROM grupo_muscular
-                        WHERE ID_grupo = @Id ";
-
-                return await db.QueryFirstOrDefaultAsync<MuscleGroup>(sql, new { Id = id });
-            }
-
-            public async Task<bool> InsertMuscleGroup(MuscleGroup muscleGroup)
-            {
-                var db = DbConnection();
-
-                var sql = @"INSERT INTO grupo_muscular(descripcion, Imagen_frente, Imagen_trasera, f_ult_act)
-                       VALUES(@Description, @ImageFront, @ImageRear, CURRENT_TIMESTAMP)";
-
-                var result = await db.ExecuteAsync(sql, new { muscleGroup.Description, muscleGroup.ImageFront, muscleGroup.ImageRear });
-
-                return result > 0;
-
-            }
-
-            public async Task<bool> UpdateMuscleGroup(MuscleGroup muscleGroup)
-            {
-                var db = DbConnection();
-
-                var sql = @"UPDATE grupo_muscular
-                            SET  descripcion = @Description, 
-                                 Imagen_frente = @ImageFront, 
-                                 Imagen_trasera = @ImageRear, 
-                                 f_ult_act = CURRENT_TIMESTAMP
-                            WHERE ID_grupo = @Id ";
-
-                var result = await db.ExecuteAsync(sql, new { muscleGroup.Description, muscleGroup.ImageFront, muscleGroup.ImageRear, Id = muscleGroup.ID });
-
-                return result > 0;
-            }
+            _context.MuscleGroups.Remove(muscleGroup);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
+}

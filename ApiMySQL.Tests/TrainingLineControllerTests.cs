@@ -21,10 +21,10 @@ namespace ApiMySQL.Tests.Controllers
             var trainingLineToInsert = new TrainingLine
             {
                 ID = 1,
-                IdExercise = 1,
-                IdTraining = 1,
-                Series = "3",
-                Repetition = "10",
+                ExerciseID = 1,
+                TrainingID = 1,
+                Sets = "3",
+                Repetitions = "10",
                 Weight = "50 kg",
                 Recovery = "2 min",
                 Others = "Test Others",
@@ -51,10 +51,10 @@ namespace ApiMySQL.Tests.Controllers
             var trainingLineToUpdate = new TrainingLine
             {
                 ID = 1,
-                IdExercise = 2,
-                IdTraining = 1,
-                Series = "4",
-                Repetition = "12",
+                ExerciseID = 2,
+                TrainingID = 1,
+                Sets = "4",
+                Repetitions = "12",
                 Weight = "60 kg",
                 Recovery = "3 min",
                 Others = "Updated Others",
@@ -104,10 +104,10 @@ namespace ApiMySQL.Tests.Controllers
             var expectedTrainingLine = new TrainingLine
             {
                 ID = 1,
-                IdExercise = 1,
-                IdTraining = 1,
-                Series = "3",
-                Repetition = "10",
+                ExerciseID = 1,
+                TrainingID = 1,
+                Sets = "3",
+                Repetitions = "10",
                 Weight = "50 kg",
                 Recovery = "2 min",
                 Others = "Test Others",
@@ -137,8 +137,8 @@ namespace ApiMySQL.Tests.Controllers
             var controller = new TrainingLineController(trainingLineRepositoryMock.Object, loggerMock.Object);
             var expectedTrainingLines = new List<TrainingLine>
             {
-                new TrainingLine { ID = 1, IdExercise = 1, IdTraining = 1 },
-                new TrainingLine { ID = 2, IdExercise = 2, IdTraining = 1 },
+                new TrainingLine { ID = 1, ExerciseID = 1, TrainingID = 1 },
+                new TrainingLine { ID = 2, ExerciseID = 2, TrainingID = 1 },
             };
 
             trainingLineRepositoryMock.Setup(repo => repo.GetTrainingLinesOfTraining(It.IsAny<int>()))

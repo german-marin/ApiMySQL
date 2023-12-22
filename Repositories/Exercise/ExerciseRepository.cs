@@ -1,82 +1,58 @@
 ﻿using ApiMySQL.Data;
 using ApiMySQL.Model;
-using Dapper;
-using MySql.Data.MySqlClient;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ApiMySQL.Repositories
 {
     public class ExerciseRepository : IExerciseRepository
     {
-        private readonly MySQLConfiguration _connectionString;
+        private readonly ApplicationDbContext _context;
 
-        public ExerciseRepository(MySQLConfiguration connectionString)
+        public ExerciseRepository(ApplicationDbContext context)
         {
-            _connectionString = connectionString;
-        }
-
-        protected MySqlConnection DbConnection()
-        {
-            return new MySqlConnection(_connectionString.ConnectionString);
+            _context = context;
         }
 
         public async Task<IEnumerable<Exercise>> GetCategoryExercises(int id)
         {
-            var db = DbConnection();
-
-            var sql = @"SELECT ID_ejercicio as ID, descripcion as Description, ID_categoria_FK as IdCategory, Imagen as Image
-                        FROM ejercicios
-                        WHERE ID_categoria_FK = @Id ";
-
-            return await db.QueryAsync<Exercise>(sql, new { Id = id });
+            return await _context.Exercises
+                .Where(e => e.CategoryID == id)
+                .ToListAsync();
         }
 
         public async Task<Exercise> GetExercise(int id)
         {
-            var db = DbConnection();
-            var sql = @"SELECT ID_ejercicio as ID, descripcion as Description, ID_categoria_FK as IdCategory, Imagen as Image
-                        FROM ejercicios
-                        WHERE ID_ejercicio = @Id ";
-
-            return await db.QueryFirstOrDefaultAsync<Exercise>(sql, new { Id = id });
+            return await _context.Exercises.FindAsync(id);
         }
 
         public async Task<bool> InsertExercise(Exercise exercise)
         {
-            var db = DbConnection();
-
-            var sql = @"INSERT INTO ejercicios(descripcion, ID_categoria_FK, Imagen, f_ult_act)
-                       VALUES(@Description, @IdCategory, @Image, CURRENT_TIMESTAMP)";
-
-            var result = await db.ExecuteAsync(sql, new { exercise.Description, exercise.IdCategory, exercise.Image });
-
-            return result > 0;
-
+            _context.Exercises.Add(exercise);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> UpdateExercise(Exercise exercise)
         {
-            var db = DbConnection();
-
-            var sql = @"UPDATE ejercicios
-                          SET  descripcion = @Description, 
-                               ID_categoria_FK = @IdCategory, 
-                               Imagen = @Image,
-                               f_ult_act = CURRENT_TIMESTAMP
-                         WHERE ID_ejercicio = @Id ";
-
-            var result = await db.ExecuteAsync(sql, new { exercise.Description, exercise.IdCategory, exercise.Image, Id = exercise.ID });
-
-            return result > 0;
+            _context.Entry(exercise).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return true;
         }
+
         public async Task<bool> DeleteExercise(int id)
         {
-            var db = DbConnection();
+            var exercise = await _context.Exercises.FindAsync(id);
+            if (exercise == null)
+            {
+                return false;
+            }
 
-            var sql = @"DELETE FROM ejercicios
-                        WHERE ID_ejercicio = @Id ";
-            var result = await db.ExecuteAsync(sql, new { Id = id });
-
-            return result > 0;
+            _context.Exercises.Remove(exercise);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }

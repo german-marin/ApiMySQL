@@ -22,7 +22,7 @@ namespace ApiMySQL.Tests.Controllers
             {
                 ID = 1,
                 Description = "Test Exercise",
-                IdCategory = 1,
+                CategoryID = 1,
                 Image = "image.jpg"
             };
 
@@ -43,9 +43,9 @@ namespace ApiMySQL.Tests.Controllers
             var exerciseRepositoryMock = new Mock<IExerciseRepository>();
             var loggerMock = new Mock<ILogger<ExerciseController>>();
             var controller = new ExerciseController(exerciseRepositoryMock.Object, loggerMock.Object);
-            var exerciseToUpdate = new Exercise { ID = 1, Description = "Updated Exercise", IdCategory = 1, Image = "updated.jpg" };
+            var exerciseToUpdate = new Exercise { ID = 1, Description = "Updated Exercise", CategoryID = 1, Image = "updated.jpg" };
 
-            var existingExercise = new Exercise { ID = 1, Description = "Test Exercise", IdCategory = 1, Image = "image.jpg" };
+            var existingExercise = new Exercise { ID = 1, Description = "Test Exercise", CategoryID = 1, Image = "image.jpg" };
             exerciseRepositoryMock.Setup(repo => repo.GetExercise(It.IsAny<int>()))
                 .ReturnsAsync(existingExercise);
 
@@ -67,7 +67,7 @@ namespace ApiMySQL.Tests.Controllers
             var exerciseRepositoryMock = new Mock<IExerciseRepository>();
             var loggerMock = new Mock<ILogger<ExerciseController>>();
             var controller = new ExerciseController(exerciseRepositoryMock.Object, loggerMock.Object);
-            var expectedExercise = new Exercise { ID = 1, Description = "Test Exercise", IdCategory = 1, Image = "image.jpg" };
+            var expectedExercise = new Exercise { ID = 1, Description = "Test Exercise", CategoryID = 1, Image = "image.jpg" };
 
             exerciseRepositoryMock.Setup(repo => repo.GetExercise(It.IsAny<int>()))
                 .ReturnsAsync(expectedExercise);
@@ -92,8 +92,8 @@ namespace ApiMySQL.Tests.Controllers
             var controller = new ExerciseController(exerciseRepositoryMock.Object, loggerMock.Object);
             var expectedExercises = new List<Exercise>
             {
-                new Exercise { ID = 1, Description = "Exercise 1", IdCategory = 1, Image = "image1.jpg" },
-                new Exercise { ID = 2, Description = "Exercise 2", IdCategory = 1, Image = "image2.jpg" },
+                new Exercise { ID = 1, Description = "Exercise 1", CategoryID = 1, Image = "image1.jpg" },
+                new Exercise { ID = 2, Description = "Exercise 2", CategoryID = 1, Image = "image2.jpg" },
             };
 
             exerciseRepositoryMock.Setup(repo => repo.GetCategoryExercises(It.IsAny<int>()))
@@ -119,7 +119,7 @@ namespace ApiMySQL.Tests.Controllers
             var controller = new ExerciseController(exerciseRepositoryMock.Object, loggerMock.Object);
             var exerciseIdToDelete = 1;
 
-            var existingExercise = new Exercise { ID = 1, Description = "Test Exercise", IdCategory = 1, Image = "image.jpg" };
+            var existingExercise = new Exercise { ID = 1, Description = "Test Exercise", CategoryID = 1, Image = "image.jpg" };
             exerciseRepositoryMock.Setup(repo => repo.GetExercise(It.IsAny<int>()))
                 .ReturnsAsync(existingExercise);
 

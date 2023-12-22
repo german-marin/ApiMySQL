@@ -1,4 +1,5 @@
 ﻿using ApiMySQL.Model;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ApiMySQL.Repositories
 {
@@ -8,6 +9,6 @@ namespace ApiMySQL.Repositories
         Task<Category> GetCategory(int id);
         Task<bool> InsertCategory(Category category);
         Task<bool> UpdateCategory(Category category);
-        Task<bool> DeleteCategory(int id);
+        Task<bool> DeleteCategory(int id); 
     }
 }

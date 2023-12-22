@@ -1,92 +1,58 @@
 ﻿using ApiMySQL.Data;
 using ApiMySQL.Model;
-using Dapper;
-using MySql.Data.MySqlClient;
+using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ApiMySQL.Repositories
 {
     public class TrainingLineRepository : ITrainingLineRepository
     {
-        private readonly MySQLConfiguration _connectionString;
+        private readonly ApplicationDbContext _context;
 
-        public TrainingLineRepository(MySQLConfiguration connectionString)
+        public TrainingLineRepository(ApplicationDbContext context)
         {
-            _connectionString = connectionString;
-        }
-
-        protected MySqlConnection DbConnection()
-        {
-            return new MySqlConnection(_connectionString.ConnectionString);
+            _context = context;
         }
 
         public async Task<IEnumerable<TrainingLine>> GetTrainingLinesOfTraining(int id)
         {
-            var db = DbConnection();
-
-            var sql = @"SELECT ID_lineas as ID, ID_ejercicio_FK as IdExercise, ID_entrenamiento_FK as IdTraining,
-                               series as Series, repeticiones as Repetition, pesos as Weight, recuperacion as Recovery, 
-                               otros as Others, notas as Notes
-                        FROM lineas_entrenamiento
-                        WHERE ID_entrenamiento_FK = @Id ";
-
-            return await db.QueryAsync<TrainingLine>(sql, new { Id = id });
+            return await _context.TrainingLines
+                .Where(tl => tl.TrainingID == id)
+                .ToListAsync();
         }
 
         public async Task<TrainingLine> GetTrainingLine(int id)
         {
-            var db = DbConnection();
-            var sql = @"SELECT ID_lineas as ID, ID_ejercicio_FK as IdExercise, ID_entrenamiento_FK as IdTraining,
-                               series as Series, repeticiones as Repetition, pesos as Weight, recuperacion as Recovery, 
-                               otros as Others, notas as Notes
-                        FROM lineas_entrenamiento
-                        WHERE ID_lineas = @Id ";
-
-            return await db.QueryFirstOrDefaultAsync<TrainingLine>(sql, new { Id = id });
+            return await _context.TrainingLines.FindAsync(id);
         }
 
         public async Task<bool> InsertTrainingLine(TrainingLine trainingLine)
         {
-            var db = DbConnection();
-
-            var sql = @"INSERT INTO lineas_entrenamiento(ID_ejercicio_FK, ID_entrenamiento_FK, series, repeticiones, pesos, recuperacion, otros, notas, f_ult_act)
-                       VALUES(@IdExercise, @IdTraining, @Series, @Repetition, @Weight, @Recovery, @Others, @Notes, CURRENT_TIMESTAMP)";
-            
-
-            var result = await db.ExecuteAsync(sql, new { trainingLine.IdExercise, trainingLine.IdTraining, trainingLine.Series, trainingLine.Repetition, trainingLine.Weight, trainingLine.Recovery,trainingLine.Others, trainingLine.Notes });
-
-            return result > 0;
-
+            _context.TrainingLines.Add(trainingLine);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
         public async Task<bool> UpdateTrainingLine(TrainingLine trainingLine)
         {
-            var db = DbConnection();
-
-            var sql = @"UPDATE lineas_entrenamiento
-                          SET  ID_ejercicio_FK = @IdExercise,
-                               ID_entrenamiento_FK = @IdTraining,
-                               series = @Series,
-                               repeticiones = @Repetition,
-                               pesos = @Weight,
-                               recuperacion = @Recovery,
-                               otros = @Others,
-                               notas = @Notes,
-                               f_ult_act = CURRENT_TIMESTAMP
-                         WHERE ID_lineas = @Id ";
-
-            var result = await db.ExecuteAsync(sql, new { trainingLine.IdExercise, trainingLine.IdTraining, trainingLine.Series, trainingLine.Repetition, trainingLine.Weight, trainingLine.Recovery, trainingLine.Others, trainingLine.Notes, Id = trainingLine.ID });
-
-            return result > 0;
+            _context.Entry(trainingLine).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+            return true;
         }
+
         public async Task<bool> DeleteTrainingLine(int id)
         {
-            var db = DbConnection();
+            var trainingLine = await _context.TrainingLines.FindAsync(id);
+            if (trainingLine == null)
+            {
+                return false;
+            }
 
-            var sql = @"DELETE FROM lineas_entrenamiento
-                              WHERE ID_lineas = @Id ";
-            var result = await db.ExecuteAsync(sql, new { Id = id });
-
-            return result > 0;
+            _context.TrainingLines.Remove(trainingLine);
+            await _context.SaveChangesAsync();
+            return true;
         }
     }
 }
