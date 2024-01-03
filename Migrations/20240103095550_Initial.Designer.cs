@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ApiMySQL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20231221131917_Initial")]
+    [Migration("20240103095550_Initial")]
     partial class Initial
     {
         /// <inheritdoc />
@@ -226,7 +226,7 @@ namespace ApiMySQL.Migrations
 
                     b.HasIndex("TrainingID");
 
-                    b.ToTable("trainingLines");
+                    b.ToTable("TrainingLines");
                 });
 
             modelBuilder.Entity("ApiMySQL.Model.Category", b =>

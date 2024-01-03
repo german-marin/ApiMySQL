@@ -223,7 +223,7 @@ namespace ApiMySQL.Migrations
 
                     b.HasIndex("TrainingID");
 
-                    b.ToTable("trainingLines");
+                    b.ToTable("TrainingLines");
                 });
 
             modelBuilder.Entity("ApiMySQL.Model.Category", b =>

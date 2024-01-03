@@ -141,7 +141,7 @@ namespace ApiMySQL.Migrations
                 .Annotation("MySql:CharSet", "utf8mb4");
 
             migrationBuilder.CreateTable(
-                name: "trainingLines",
+                name: "TrainingLines",
                 columns: table => new
                 {
                     ID = table.Column<int>(type: "int", nullable: false)
@@ -164,15 +164,15 @@ namespace ApiMySQL.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_trainingLines", x => x.ID);
+                    table.PrimaryKey("PK_TrainingLines", x => x.ID);
                     table.ForeignKey(
-                        name: "FK_trainingLines_Exercises_ExerciseID",
+                        name: "FK_TrainingLines_Exercises_ExerciseID",
                         column: x => x.ExerciseID,
                         principalTable: "Exercises",
                         principalColumn: "ID",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_trainingLines_Trainings_TrainingID",
+                        name: "FK_TrainingLines_Trainings_TrainingID",
                         column: x => x.TrainingID,
                         principalTable: "Trainings",
                         principalColumn: "ID",
@@ -191,13 +191,13 @@ namespace ApiMySQL.Migrations
                 column: "CategoryID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_trainingLines_ExerciseID",
-                table: "trainingLines",
+                name: "IX_TrainingLines_ExerciseID",
+                table: "TrainingLines",
                 column: "ExerciseID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_trainingLines_TrainingID",
-                table: "trainingLines",
+                name: "IX_TrainingLines_TrainingID",
+                table: "TrainingLines",
                 column: "TrainingID");
 
             migrationBuilder.CreateIndex(
@@ -210,7 +210,7 @@ namespace ApiMySQL.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "trainingLines");
+                name: "TrainingLines");
 
             migrationBuilder.DropTable(
                 name: "Exercises");
