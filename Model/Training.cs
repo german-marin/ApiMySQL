@@ -13,6 +13,7 @@ namespace ApiMySQL.Model
         public DateTime EndDate { get; set; }
         public int CustomerID { get; set; }
         public string Notes { get; set; }
+        public string Days { get; set; }
         public DateTime LastUpdate { get; set; }
 
         //[ForeignKey("CustomerID")]
