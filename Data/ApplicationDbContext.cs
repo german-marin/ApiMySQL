@@ -15,8 +15,7 @@ namespace ApiMySQL.Data
         public DbSet<MuscleGroup> MuscleGroups { get; set; }
         public DbSet<Training> Trainings { get; set; }
         public DbSet<TrainingLine> TrainingLines { get; set; }
-
-
+        public DbSet<User> Users { get; set; }
 
     }
 }

@@ -2,9 +2,15 @@
 using ApiMySQL.Model;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace ApiMySQL.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class MuscleGroupController : ControllerBase
@@ -40,7 +46,7 @@ namespace ApiMySQL.Controllers
         public async Task<IActionResult> GetAllMuscleGroup()
         {
             try
-            {
+            {                
                 var muscleGroups = await _muscleGroupRepository.GetAllMuscleGroup();
 
                 if (muscleGroups == null || muscleGroups.Count() == 0)

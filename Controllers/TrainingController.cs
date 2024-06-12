@@ -2,11 +2,12 @@
 using ApiMySQL.Repositories;
 using ApiMySQL.Model;
 using Swashbuckle.AspNetCore.Annotations;
+using Microsoft.AspNetCore.Authorization;
 
 
 namespace ApiMySQL.Controllers
 {
-
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class TrainingController : ControllerBase

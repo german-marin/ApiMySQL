@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using ApiMySQL.Repositories;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ApiMySQL.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ExerciseController : ControllerBase
