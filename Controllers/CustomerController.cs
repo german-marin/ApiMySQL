@@ -108,6 +108,7 @@ namespace ApiMySQL.Controllers
                     return BadRequest();
                 }
 
+                customer.LastUpdated = DateTime.Now;
                 var result = await _customerRepository.InsertCustomer(customer);
                 if (result)
                 {
@@ -140,23 +141,24 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateCustomer(int id, [FromBody] Customer customer)
+        public async Task<IActionResult> UpdateCustomer([FromBody] Customer customer)
         {
             try
             {
-                if (customer == null || customer.ID != id || !ModelState.IsValid)
+                if (customer == null || !ModelState.IsValid)
                 {
                     _logger.LogError("Error en la operación UpdateCustomer, datos incorrectos");
                     return BadRequest();
                 }
 
-                var existingCustomer = await _customerRepository.GetCustomer(id);
+                var existingCustomer = await _customerRepository.GetCustomer(customer.ID);
                 if (existingCustomer == null)
                 {
                     _logger.LogError("Error en la operación UpdateCustomer, no existe el cliente a actualizar");
                     return NotFound();
                 }
 
+                customer.LastUpdated = DateTime.Now;
                 var result = await _customerRepository.UpdateCustomer(customer);
                 if (result)
                 {
@@ -182,7 +184,7 @@ namespace ApiMySQL.Controllers
         /// <response code="204">Cliente eliminado correctamente</response>
         /// <response code="404">Cliente no encontrado</response>
         /// <response code="500">Error interno del servidor</response>
-        [HttpDelete("{id}")]
+        [HttpDelete("DeleteCustomer")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]

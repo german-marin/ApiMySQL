@@ -23,7 +23,8 @@ namespace ApiMySQL.Repositories
 
         public async Task<Customer> GetCustomer(int id)
         {
-            return await _context.Customers.FindAsync(id);
+            //return await _context.Customers.FindAsync(id);
+            return await _context.Customers.AsNoTracking().FirstOrDefaultAsync(c => c.ID == id);
         }
 
         public async Task<bool> InsertCustomer(Customer customer)

@@ -144,8 +144,8 @@ namespace ApiMySQL.Controllers
                 {
                     _logger.LogError("****Error en la operación InsertCategory, no existe el grupo muscular");
                     return BadRequest();
-                }                    
-
+                }
+                category.LastUpdate = DateTime.Now;
                 var created = await _categoryRepository.InsertCategory(category);
                 _logger.LogInformation("****Operación InsertCategory ejecutada correctamente.");
                 return Created("created", created);
@@ -198,6 +198,7 @@ namespace ApiMySQL.Controllers
                     return BadRequest();
                 }
 
+                category.LastUpdate = DateTime.Now;
                 await _categoryRepository.UpdateCategory(category);
                 _logger.LogInformation("****Operación UpdateCategory ejecutada correctamente.");
                 return NoContent();

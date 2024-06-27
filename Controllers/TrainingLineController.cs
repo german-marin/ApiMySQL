@@ -146,6 +146,7 @@ namespace ApiMySQL.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
+                trainingLine.LastUpdated = DateTime.Now;
                 var created = await _trainingLineRepository.InsertTrainingLine(trainingLine);
                 _logger.LogInformation("****Operación InsertTrainingLine ejecutada correctamente.");
                 return Created("created", created);
@@ -204,6 +205,7 @@ namespace ApiMySQL.Controllers
                     return BadRequest();
                 }
 
+                trainingLine.LastUpdated = DateTime.Now;
                 await _trainingLineRepository.UpdateTrainingLine(trainingLine);
                 _logger.LogInformation("****Operación UpdateTrainingLine ejecutada correctamente.");
                 return NoContent();

@@ -3,6 +3,7 @@ using ApiMySQL.Repositories;
 using ApiMySQL.Model;
 using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.AspNetCore.Authorization;
+using Castle.Core.Resource;
 
 
 namespace ApiMySQL.Controllers
@@ -99,8 +100,9 @@ namespace ApiMySQL.Controllers
                 {
                     _logger.LogInformation("****El cliente seleccionado no existe");
                     return BadRequest();
-                }                    
+                }
 
+                training.LastUpdate = DateTime.Now;
                 var created = await _trainingRepository.InsertTraining(training);
                 _logger.LogInformation("****Operación InsertTraining ejecutada correctamente.");
                 return Created("created", created);
@@ -153,6 +155,7 @@ namespace ApiMySQL.Controllers
                     return BadRequest();
                 }
 
+                training.LastUpdate = DateTime.Now;
                 await _trainingRepository.UpdateTraining(training);
                 _logger.LogInformation("****Operación UpdateTraining ejecutada correctamente.");
                 return NoContent();

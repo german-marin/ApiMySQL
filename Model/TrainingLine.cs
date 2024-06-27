@@ -17,6 +17,7 @@ namespace ApiMySQL.Model
         public string Recovery { get; set; }
         public string Others { get; set; }
         public string Notes { get; set; }
+        public string? Grip {  get; set; }
         public DateTime? LastUpdated { get; set; }
 
         //[ForeignKey("ExerciseID")]

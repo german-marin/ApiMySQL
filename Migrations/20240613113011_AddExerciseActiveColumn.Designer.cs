@@ -3,6 +3,7 @@ using System;
 using ApiMySQL.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ApiMySQL.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240613113011_AddExerciseActiveColumn")]
+    partial class AddExerciseActiveColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -191,9 +194,6 @@ namespace ApiMySQL.Migrations
 
                     b.Property<int>("ExerciseID")
                         .HasColumnType("int");
-
-                    b.Property<string>("Grip")
-                        .HasColumnType("longtext");
 
                     b.Property<DateTime?>("LastUpdated")
                         .HasColumnType("datetime(6)");

@@ -20,6 +20,7 @@ namespace ApiMySQL.Repositories
         {
             return await _context.Exercises
                 .Where(e => e.CategoryID == id)
+                .AsNoTracking() // Añade este método para evitar el rastreo
                 .ToListAsync();
         }
 
@@ -37,6 +38,16 @@ namespace ApiMySQL.Repositories
 
         public async Task<bool> UpdateExercise(Exercise exercise)
         {
+            //_context.Entry(exercise).State = EntityState.Modified;
+            //await _context.SaveChangesAsync();
+            //return true;
+            // Verificar si ya hay una instancia rastreada del ejercicio y desacoplarla
+            var local = _context.Exercises.Local.FirstOrDefault(e => e.ID == exercise.ID);
+            if (local != null)
+            {
+                _context.Entry(local).State = EntityState.Detached;
+            }
+
             _context.Entry(exercise).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return true;

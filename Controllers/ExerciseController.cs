@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace ApiMySQL.Controllers
 {
-    [Authorize]
+       [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ExerciseController : ControllerBase
@@ -137,6 +137,7 @@ namespace ApiMySQL.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
+                exercise.LastUpdated = DateTime.Now;
                 var created = await _exerciseRepository.InsertExercise(exercise);
                 _logger.LogInformation("****Operación InsertExercise ejecutada correctamente.");
                 return Created("created", created);
@@ -168,7 +169,7 @@ namespace ApiMySQL.Controllers
         /// <response code="204">Ejercicio actualizado correctamente</response>
         /// <response code="500">Internal server error</response>
         /// <response code="400">Datos incorrectos o ejercicio no encontrado</response>
-        [HttpPut]
+        [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -189,7 +190,7 @@ namespace ApiMySQL.Controllers
                     _logger.LogError("****Error en la operación UpdateExercise, no existe el ejercicio a actualizar");
                     return BadRequest();
                 }
-
+                exercise.LastUpdated = DateTime.Now;
                 await _exerciseRepository.UpdateExercise(exercise);
                 _logger.LogInformation("****Operación UpdateExercise ejecutada correctamente.");
                 return NoContent();
@@ -216,7 +217,7 @@ namespace ApiMySQL.Controllers
         /// <response code="204">Ejercicio eliminado correctamente</response>
         /// <response code="500">Internal server error</response>
         /// <response code="400">Ejercicio no encontrado</response>
-        [HttpDelete("{id}")]
+        [HttpDelete("DeleteExercise")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]

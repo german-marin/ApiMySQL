@@ -113,31 +113,17 @@ namespace ApiMySQL.Tests.Controllers
             _customerRepositoryMock.Setup(repo => repo.UpdateCustomer(customer)).ReturnsAsync(true);
 
             // Act
-            var result = await _controller.UpdateCustomer(1, customer);
+            var result = await _controller.UpdateCustomer(customer);
 
             // Assert
             Assert.IsInstanceOf<NoContentResult>(result);
         }
 
         [Test]
-        public async Task UpdateCustomer_InvalidId_ReturnsBadRequest()
-        {
-            // Arrange
-            var customer = new Customer { ID = 1, FirstName = "John", LastName1 = "Doe" };
-
-            // Act
-            var result = await _controller.UpdateCustomer(2, customer) as BadRequestResult;
-
-            // Assert
-            Assert.NotNull(result);
-            Assert.AreEqual(400, result.StatusCode);
-        }
-
-        [Test]
         public async Task UpdateCustomer_NullCustomer_ReturnsBadRequest()
         {
             // Act
-            var result = await _controller.UpdateCustomer(1, null) as BadRequestResult;
+            var result = await _controller.UpdateCustomer(null) as BadRequestResult;
 
             // Assert
             Assert.NotNull(result);
