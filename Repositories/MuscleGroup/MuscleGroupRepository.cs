@@ -1,6 +1,7 @@
 ﻿using ApiMySQL.Data;
 using ApiMySQL.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,47 +10,55 @@ namespace ApiMySQL.Repositories
 {
     public class MuscleGroupRepository : IMuscleGroupRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public MuscleGroupRepository(ApplicationDbContext context)
+        public MuscleGroupRepository(IHttpContextAccessor httpContextAccessor)
         {
-            _context = context;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        private ApplicationDbContext DbContext
+        {
+            get
+            {
+                return _httpContextAccessor.HttpContext.Items["DbContext"] as ApplicationDbContext;
+            }
         }
 
         public async Task<IEnumerable<MuscleGroup>> GetAllMuscleGroup()
         {
-            return await _context.MuscleGroups.ToListAsync();
+            return await DbContext.MuscleGroups.ToListAsync();
         }
 
         public async Task<MuscleGroup> GetMuscleGroup(int id)
         {
-            return await _context.MuscleGroups.FindAsync(id);
+            return await DbContext.MuscleGroups.FindAsync(id);
         }
 
         public async Task<bool> InsertMuscleGroup(MuscleGroup muscleGroup)
         {
-            _context.MuscleGroups.Add(muscleGroup);
-            await _context.SaveChangesAsync();
+            DbContext.MuscleGroups.Add(muscleGroup);
+            await DbContext.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> UpdateMuscleGroup(MuscleGroup muscleGroup)
         {
-            _context.Entry(muscleGroup).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            DbContext.Entry(muscleGroup).State = EntityState.Modified;
+            await DbContext.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> DeleteMuscleGroup(int id)
         {
-            var muscleGroup = await _context.MuscleGroups.FindAsync(id);
+            var muscleGroup = await DbContext.MuscleGroups.FindAsync(id);
             if (muscleGroup == null)
             {
                 return false;
             }
 
-            _context.MuscleGroups.Remove(muscleGroup);
-            await _context.SaveChangesAsync();
+            DbContext.MuscleGroups.Remove(muscleGroup);
+            await DbContext.SaveChangesAsync();
             return true;
         }
     }

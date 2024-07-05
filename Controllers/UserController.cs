@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Threading.Tasks;
-using ApiMySQL.Repositories;
+using ApiMySQL.Services;
 
 namespace ApiMySQL.Controllers
 {

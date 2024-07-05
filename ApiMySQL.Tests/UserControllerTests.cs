@@ -1,6 +1,6 @@
 ﻿using ApiMySQL.Controllers;
 using ApiMySQL.Model;
-using ApiMySQL.Repositories;
+using ApiMySQL.Services;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;

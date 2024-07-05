@@ -1,6 +1,7 @@
 ﻿using ApiMySQL.Data;
 using ApiMySQL.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,16 +10,24 @@ namespace ApiMySQL.Repositories
 {
     public class ExerciseRepository : IExerciseRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public ExerciseRepository(ApplicationDbContext context)
+        public ExerciseRepository(IHttpContextAccessor httpContextAccessor)
         {
-            _context = context;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        private ApplicationDbContext DbContext
+        {
+            get
+            {
+                return _httpContextAccessor.HttpContext.Items["DbContext"] as ApplicationDbContext;
+            }
         }
 
         public async Task<IEnumerable<Exercise>> GetCategoryExercises(int id)
         {
-            return await _context.Exercises
+            return await DbContext.Exercises
                 .Where(e => e.CategoryID == id)
                 .AsNoTracking() // Añade este método para evitar el rastreo
                 .ToListAsync();
@@ -26,43 +35,40 @@ namespace ApiMySQL.Repositories
 
         public async Task<Exercise> GetExercise(int id)
         {
-            return await _context.Exercises.FindAsync(id);
+            return await DbContext.Exercises.FindAsync(id);
         }
 
         public async Task<bool> InsertExercise(Exercise exercise)
         {
-            _context.Exercises.Add(exercise);
-            await _context.SaveChangesAsync();
+            DbContext.Exercises.Add(exercise);
+            await DbContext.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> UpdateExercise(Exercise exercise)
         {
-            //_context.Entry(exercise).State = EntityState.Modified;
-            //await _context.SaveChangesAsync();
-            //return true;
             // Verificar si ya hay una instancia rastreada del ejercicio y desacoplarla
-            var local = _context.Exercises.Local.FirstOrDefault(e => e.ID == exercise.ID);
+            var local = DbContext.Exercises.Local.FirstOrDefault(e => e.ID == exercise.ID);
             if (local != null)
             {
-                _context.Entry(local).State = EntityState.Detached;
+                DbContext.Entry(local).State = EntityState.Detached;
             }
 
-            _context.Entry(exercise).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            DbContext.Entry(exercise).State = EntityState.Modified;
+            await DbContext.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> DeleteExercise(int id)
         {
-            var exercise = await _context.Exercises.FindAsync(id);
+            var exercise = await DbContext.Exercises.FindAsync(id);
             if (exercise == null)
             {
                 return false;
             }
 
-            _context.Exercises.Remove(exercise);
-            await _context.SaveChangesAsync();
+            DbContext.Exercises.Remove(exercise);
+            await DbContext.SaveChangesAsync();
             return true;
         }
     }

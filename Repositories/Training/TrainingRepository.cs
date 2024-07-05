@@ -1,6 +1,7 @@
 ﻿using ApiMySQL.Data;
 using ApiMySQL.Model;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,76 +10,83 @@ namespace ApiMySQL.Repositories
 {
     public class TrainingRepository : ITrainingRepository
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public TrainingRepository(ApplicationDbContext context)
+        public TrainingRepository(IHttpContextAccessor httpContextAccessor)
         {
-            _context = context;
+            _httpContextAccessor = httpContextAccessor;
+        }
+
+        private ApplicationDbContext DbContext
+        {
+            get
+            {
+                return _httpContextAccessor.HttpContext.Items["DbContext"] as ApplicationDbContext;
+            }
         }
 
         public async Task<Training> GetTraining(int id)
         {
-            return await _context.Trainings
+            return await DbContext.Trainings
                 .Where(t => t.ID == id)
                 .FirstOrDefaultAsync();
         }
 
         public async Task<IEnumerable<Training>> GetAllTrainings()
         {
-            return await _context.Trainings.ToListAsync();
+            return await DbContext.Trainings.ToListAsync();
         }
 
         public async Task<int> InsertTraining(Training training)
         {
-            _context.Trainings.Add(training);
-            await _context.SaveChangesAsync();
+            DbContext.Trainings.Add(training);
+            await DbContext.SaveChangesAsync();
             return training.ID;
         }
 
         public async Task<bool> UpdateTraining(Training training)
         {
-            _context.Entry(training).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+            DbContext.Entry(training).State = EntityState.Modified;
+            await DbContext.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> DeleteTraining(int id)
         {
-            var training = await _context.Trainings.FindAsync(id);
+            var training = await DbContext.Trainings.FindAsync(id);
             if (training == null)
             {
                 return false;
             }
 
-            _context.Trainings.Remove(training);
-            await _context.SaveChangesAsync();
+            DbContext.Trainings.Remove(training);
+            await DbContext.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> DeleteTrainingAndTrainingLines(int id)
         {
-            var training = await _context.Trainings.FindAsync(id);
+            var training = await DbContext.Trainings.FindAsync(id);
             if (training == null)
             {
                 return false;
             }
 
-            var trainingLines = await _context.TrainingLines
+            var trainingLines = await DbContext.TrainingLines
                 .Where(tl => tl.TrainingID == id)
                 .ToListAsync();
 
-            _context.TrainingLines.RemoveRange(trainingLines);
-            _context.Trainings.Remove(training);
+            DbContext.TrainingLines.RemoveRange(trainingLines);
+            DbContext.Trainings.Remove(training);
 
-            await _context.SaveChangesAsync();
+            await DbContext.SaveChangesAsync();
 
             return true;
         }
 
         public async Task<bool> CustomerExist(int id)
         {
-            var exists = await _context.Customers.AnyAsync(customer => customer.ID == id);
-
+            var exists = await DbContext.Customers.AnyAsync(customer => customer.ID == id);
             return exists;
         }
     }

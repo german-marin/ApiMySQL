@@ -11,15 +11,15 @@ using System.Threading.Tasks;
 using BCrypt.Net;
 using Org.BouncyCastle.Crypto.Generators;
 
-namespace ApiMySQL.Repositories
-{   
+namespace ApiMySQL.Services
+{
 
     public class UserService : IUserService
     {
-        private readonly ApplicationDbContext _context;
+        private readonly CommonDbContext _context;
         private readonly IJwtSettings _jwtSettings;
 
-        public UserService(ApplicationDbContext context, IJwtSettings jwtSettings)
+        public UserService(CommonDbContext context, IJwtSettings jwtSettings)
         {
             _context = context;
             _jwtSettings = jwtSettings;
@@ -49,6 +49,7 @@ namespace ApiMySQL.Repositories
                 Subject = new ClaimsIdentity(new[]
                 {
                     new Claim("id", user.Id.ToString()),
+                    new Claim("SchemaName", user.SchemaName),// Agregar el nombre del esquema como un claim
                     new Claim(JwtRegisteredClaimNames.Sub, _jwtSettings.Subject),
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                     new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
@@ -61,6 +62,28 @@ namespace ApiMySQL.Repositories
 
             var token = tokenHandler.CreateToken(tokenDescriptor);
             return tokenHandler.WriteToken(token);
+        }
+        public ClaimsPrincipal ValidateJwtToken(string token)
+        {
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
+            try
+            {
+                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false,
+                    ClockSkew = TimeSpan.Zero
+                }, out SecurityToken validatedToken);
+
+                return principal;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
