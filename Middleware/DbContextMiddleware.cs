@@ -1,5 +1,6 @@
-﻿// Middleware/DbContextMiddleware.cs
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
+using Serilog;
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using ApiMySQL.Data;
@@ -18,19 +19,35 @@ public class DbContextMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        var userService = context.RequestServices.GetService<IUserService>();
-        var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
-        if (authHeader != null && authHeader.StartsWith("Bearer "))
+        try
         {
-            var token = authHeader.Substring("Bearer ".Length).Trim();
+            var userService = context.RequestServices.GetService<IUserService>();
+            var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
 
-            var schemaNameClaim = context.User.Claims.FirstOrDefault(c => c.Type == "SchemaName")?.Value;
-            if (!string.IsNullOrEmpty(schemaNameClaim))
+            if (authHeader != null && authHeader.StartsWith("Bearer "))
             {
-                context.Items["DbContext"] = _dbContextFactory.CreateDbContext(schemaNameClaim);
-            }
-        }
+                var token = authHeader.Substring("Bearer ".Length).Trim();
 
-        await _next(context);
+                var schemaNameClaim = context.User.Claims.FirstOrDefault(c => c.Type == "SchemaName")?.Value;
+                if (!string.IsNullOrEmpty(schemaNameClaim))
+                {
+                    var dbContext = _dbContextFactory.CreateDbContext(schemaNameClaim);
+                    context.Items["DbContext"] = dbContext;
+
+                    // Log successful creation of DbContext
+                    Log.Logger.Information("DbContext created for SchemaName: {SchemaName}", schemaNameClaim);
+                }
+            }
+
+            await _next(context);
+        }
+        catch (Exception ex)
+        {
+            // Log any exceptions that occur during middleware execution
+            Log.Logger.Error(ex, "Error in DbContextMiddleware: {ErrorMessage}", ex.Message);
+
+            // Re-throw the exception to be handled by the global exception handler
+            throw;
+        }
     }
 }

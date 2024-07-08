@@ -4,6 +4,7 @@ using Microsoft.OpenApi.Models;
 using System.IO;
 using System.Reflection;
 using ApiMySQL.Data;
+using ApiMySQL.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -51,15 +52,17 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Configure the logging system with Serilog
-Log.Logger = new LoggerConfiguration()
-    .WriteTo.File("logs/mylog-.txt", rollingInterval: RollingInterval.Day)
+// Leer configuración de Serilog desde appsettings.json
+var loggerConfiguration = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
     .CreateLogger();
+
+Log.Logger = loggerConfiguration;
 
 builder.Services.AddLogging(loggingBuilder =>
 {
     loggingBuilder.ClearProviders();
-    loggingBuilder.AddSerilog();
+    loggingBuilder.AddSerilog(loggerConfiguration);
 });
 
 var app = builder.Build();
@@ -80,8 +83,10 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Añadir el middleware de DbContext 
+// Añadir el middleware de DbContext aquí
 app.UseMiddleware<DbContextMiddleware>();
+
+app.UseMiddleware<RequestCorrelationMiddleware>();
 
 app.MapControllers();
 app.UseEndpoints(endpoints =>

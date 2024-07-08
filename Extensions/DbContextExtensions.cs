@@ -1,10 +1,10 @@
-﻿// Extensions/DbContextExtensions.cs
+﻿using ApiMySQL.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
-using ApiMySQL.Data;
-using Microsoft.AspNetCore.Connections;
+using Serilog;
+using System;
 
 namespace ApiMySQL.Extensions
 {
@@ -15,7 +15,12 @@ namespace ApiMySQL.Extensions
             var serverVersion = new MySqlServerVersion(new Version(8, 0, 34));
 
             services.AddDbContext<CommonDbContext>(options =>
-                options.UseMySql(configuration.GetConnectionString("DefaultConnection"), serverVersion));
+            {
+                options.UseMySql(configuration.GetConnectionString("DefaultConnection"), serverVersion);
+
+                // Logging database connection configuration
+                Log.Logger.Information("MySQL DbContext configured with connection string: {ConnectionString}", configuration.GetConnectionString("DefaultConnection"));
+            });
 
             // Register ApplicationDbContextFactory as a singleton
             services.AddSingleton<ApplicationDbContextFactory>();

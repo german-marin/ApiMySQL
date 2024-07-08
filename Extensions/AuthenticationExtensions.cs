@@ -1,8 +1,8 @@
-﻿// Extensions/AuthenticationExtensions.cs
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Serilog;
 using System.Text;
 
 namespace ApiMySQL.Extensions
@@ -31,6 +31,10 @@ namespace ApiMySQL.Extensions
                     ValidAudience = configuration["Jwt:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:SecretKey"]))
                 };
+
+                // Logging authentication configuration
+                Log.Logger.Information("JWT settings: SaveToken={SaveToken}, RequireHttpsMetadata={RequireHttpsMetadata}, ValidIssuer={ValidIssuer}, ValidAudience={ValidAudience}",
+                    options.SaveToken, options.RequireHttpsMetadata, configuration["Jwt:Issuer"], configuration["Jwt:Audience"]);
             });
 
             return services;
