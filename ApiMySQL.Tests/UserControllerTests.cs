@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 
 namespace ApiMySQL.Tests.Controllers
 {
@@ -33,10 +35,10 @@ namespace ApiMySQL.Tests.Controllers
             Assert.IsNotNull(result);
             Assert.AreEqual(200, result.StatusCode);
 
-            var tokenObject = result.Value as dynamic; // Convertir el resultado a un objeto dinámico
-            Assert.IsNotNull(tokenObject); // Verificar que se pudo convertir correctamente
+            var tokenObject = JObject.FromObject(result.Value);
+            Assert.IsNotNull(tokenObject["Token"]); // Verificar que la propiedad "Token" exista
 
-            var tokenValue = tokenObject.Token; // Obtener el valor de la propiedad "Token"
+            var tokenValue = tokenObject["Token"].ToString(); // Obtener el valor de la propiedad "Token"
             Assert.AreEqual(validToken, tokenValue); // Comparar el valor del token
         }
 

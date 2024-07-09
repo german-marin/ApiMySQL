@@ -11,6 +11,13 @@
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="ApiMySQL.Tests\**" />
+    <Content Remove="ApiMySQL.Tests\**" />
+    <EmbeddedResource Remove="ApiMySQL.Tests\**" />
+    <None Remove="ApiMySQL.Tests\**" />
+  </ItemGroup>
+
 
 
   <ItemGroup>

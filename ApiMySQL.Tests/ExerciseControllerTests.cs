@@ -6,6 +6,8 @@ using Moq;
 using NUnit.Framework;
 using System.Threading.Tasks;
 using Assert = NUnit.Framework.Assert;
+using Microsoft.Extensions.Logging;
+
 namespace ApiMySQL.Tests.Controllers
 {
     [TestFixture]
