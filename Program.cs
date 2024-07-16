@@ -5,11 +5,15 @@ using System.IO;
 using System.Reflection;
 using ApiMySQL.Data;
 using ApiMySQL.Middleware;
+using ApiMySQL.Mapping;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllers();
+
+// Add AutoMapper
+builder.Services.AddAutoMapper(typeof(MappingProfile));
 
 // Add custom DbContexts
 builder.Services.AddCustomDbContexts(builder.Configuration);
@@ -83,7 +87,7 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Añadir el middleware de DbContext aquí
+// Añadir el middleware de DbContext 
 app.UseMiddleware<DbContextMiddleware>();
 
 app.UseMiddleware<RequestCorrelationMiddleware>();

@@ -5,7 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using Moq;
 using NUnit.Framework;
 using Assert = NUnit.Framework.Assert;
+using System;
+using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
+using System.Threading.Tasks;
+using AutoMapper;
+using ApiMySQL.DTOs;
 
 namespace ApiMySQL.Tests.Controllers
 {
@@ -19,19 +24,29 @@ namespace ApiMySQL.Tests.Controllers
             var trainingRepositoryMock = new Mock<ITrainingRepository>();
             trainingRepositoryMock.Setup(repo => repo.CustomerExist(It.IsAny<int>())).ReturnsAsync(true);
             var loggerMock = new Mock<ILogger<TrainingController>>();
-            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object);
-            var trainingToInsert = new Training
+            var mapperMock = new Mock<IMapper>();
+            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object, mapperMock.Object);
+            var trainingToInsertDto = new TrainingDto
             {
-                ID = 1,
                 Description = "Test Training",
                 StartDate = DateTime.Now,
                 EndDate = DateTime.Now.AddDays(7),
                 CustomerID = 1,
                 Notes = "Test Notes"
             };
+            var trainingToInsert = new Training
+            {
+                Description = trainingToInsertDto.Description,
+                StartDate = trainingToInsertDto.StartDate,
+                EndDate = trainingToInsertDto.EndDate,
+                CustomerID = trainingToInsertDto.CustomerID,
+                Notes = trainingToInsertDto.Notes
+            };
+
+            mapperMock.Setup(m => m.Map<Training>(trainingToInsertDto)).Returns(trainingToInsert);
 
             // Act
-            var result = await controller.InsertTraining(trainingToInsert) as CreatedResult;
+            var result = await controller.InsertTraining(trainingToInsertDto) as CreatedResult;
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -47,8 +62,9 @@ namespace ApiMySQL.Tests.Controllers
             var trainingRepositoryMock = new Mock<ITrainingRepository>();
             trainingRepositoryMock.Setup(repo => repo.CustomerExist(It.IsAny<int>())).ReturnsAsync(true);
             var loggerMock = new Mock<ILogger<TrainingController>>();
-            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object);
-            var trainingToUpdate = new Training
+            var mapperMock = new Mock<IMapper>();
+            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object, mapperMock.Object);
+            var trainingToUpdateDto = new TrainingDto
             {
                 ID = 1,
                 Description = "Updated Training",
@@ -57,9 +73,20 @@ namespace ApiMySQL.Tests.Controllers
                 CustomerID = 2,
                 Notes = "Updated Notes"
             };
+            var trainingToUpdate = new Training
+            {
+                ID = trainingToUpdateDto.ID,
+                Description = trainingToUpdateDto.Description,
+                StartDate = trainingToUpdateDto.StartDate,
+                EndDate = trainingToUpdateDto.EndDate,
+                CustomerID = trainingToUpdateDto.CustomerID,
+                Notes = trainingToUpdateDto.Notes
+            };
+
+            mapperMock.Setup(m => m.Map<Training>(trainingToUpdateDto)).Returns(trainingToUpdate);
 
             // Act
-            var result = await controller.UpdateTraining(trainingToUpdate) as NoContentResult;
+            var result = await controller.UpdateTraining(trainingToUpdateDto) as NoContentResult;
 
             // Assert
             Assert.That(result, Is.Not.Null);
@@ -69,15 +96,15 @@ namespace ApiMySQL.Tests.Controllers
         }
 
         [Test]
-        public async Task DeleteTraining_ValidId_ReturnsNoContent()
+        public async Task DeleteTraining_ValidId_ReturnsOkResult()
         {
             // Arrange
             var trainingRepositoryMock = new Mock<ITrainingRepository>();
             var loggerMock = new Mock<ILogger<TrainingController>>();
-            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object);
+            var mapperMock = new Mock<IMapper>();
+            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object, mapperMock.Object);
             var trainingIdToDelete = 1;
 
-            // Configurar el comportamiento del mock para devolver un Training vacío 
             trainingRepositoryMock.Setup(repo => repo.GetTraining(trainingIdToDelete)).ReturnsAsync(new Training());
 
             // Act
@@ -95,7 +122,9 @@ namespace ApiMySQL.Tests.Controllers
             // Arrange
             var trainingRepositoryMock = new Mock<ITrainingRepository>();
             var loggerMock = new Mock<ILogger<TrainingController>>();
-            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object);
+            var mapperMock = new Mock<IMapper>();
+            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object, mapperMock.Object);
+
             var expectedTraining = new Training
             {
                 ID = 1,
@@ -106,8 +135,18 @@ namespace ApiMySQL.Tests.Controllers
                 Notes = "Test Notes"
             };
 
-            trainingRepositoryMock.Setup(repo => repo.GetTraining(It.IsAny<int>()))
-                .ReturnsAsync(expectedTraining);
+            var expectedTrainingDto = new TrainingDto
+            {
+                ID = 1,
+                Description = "Test Training",
+                StartDate = DateTime.Now,
+                EndDate = DateTime.Now.AddDays(7),
+                CustomerID = 1,
+                Notes = "Test Notes"
+            };
+
+            trainingRepositoryMock.Setup(repo => repo.GetTraining(It.IsAny<int>())).ReturnsAsync(expectedTraining);
+            mapperMock.Setup(m => m.Map<TrainingDto>(It.IsAny<Training>())).Returns(expectedTrainingDto);
 
             // Act
             var result = await controller.GetTraining(1) as OkObjectResult;
@@ -116,9 +155,11 @@ namespace ApiMySQL.Tests.Controllers
             Assert.That(result, Is.Not.Null);
             Assert.That(result.StatusCode, Is.EqualTo(200));
 
-            var actualTraining = result.Value as Training;
-            Assert.That(actualTraining, Is.EqualTo(expectedTraining));
+            var actualTraining = result.Value as TrainingDto;
+            Assert.That(actualTraining, Is.Not.Null);
+            Assert.That(actualTraining, Is.EqualTo(expectedTrainingDto));
         }
+
 
         [Test]
         public async Task GetAllTrainings_ReturnsOkResultWithTrainings()
@@ -126,17 +167,23 @@ namespace ApiMySQL.Tests.Controllers
             // Arrange
             var trainingRepositoryMock = new Mock<ITrainingRepository>();
             var loggerMock = new Mock<ILogger<TrainingController>>();
-            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object);
+            var mapperMock = new Mock<IMapper>();
+            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object, mapperMock.Object);
 
             var expectedTrainings = new List<Training>
-        {
-            new Training { ID = 1, Description = "Training 1", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(7), CustomerID = 1, Notes = "Notes 1" },
-            new Training { ID = 2, Description = "Training 2", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(14), CustomerID = 2, Notes = "Notes 2" }
-            // ... agregar más entrenamientos según sea necesario
-        };
+            {
+                new Training { ID = 1, Description = "Training 1", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(7), CustomerID = 1, Notes = "Notes 1" },
+                new Training { ID = 2, Description = "Training 2", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(14), CustomerID = 2, Notes = "Notes 2" }
+            };
 
-            trainingRepositoryMock.Setup(repo => repo.GetAllTrainings())
-                .ReturnsAsync(expectedTrainings);
+            var expectedTrainingDtos = new List<TrainingDto>
+            {
+                new TrainingDto { ID = 1, Description = "Training 1", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(7), CustomerID = 1, Notes = "Notes 1" },
+                new TrainingDto { ID = 2, Description = "Training 2", StartDate = DateTime.Now, EndDate = DateTime.Now.AddDays(14), CustomerID = 2, Notes = "Notes 2" }
+            };
+
+            trainingRepositoryMock.Setup(repo => repo.GetAllTrainings()).ReturnsAsync(expectedTrainings);
+            mapperMock.Setup(m => m.Map<IEnumerable<TrainingDto>>(It.IsAny<IEnumerable<Training>>())).Returns(expectedTrainingDtos);
 
             // Act
             var result = await controller.GetAllTrainings() as OkObjectResult;
@@ -145,10 +192,11 @@ namespace ApiMySQL.Tests.Controllers
             Assert.That(result, Is.Not.Null);
             Assert.That(result.StatusCode, Is.EqualTo(200));
 
-            var actualTrainings = result.Value as IEnumerable<Training>;
+            var actualTrainings = result.Value as IEnumerable<TrainingDto>;
             Assert.That(actualTrainings, Is.Not.Null);
-            Assert.That(actualTrainings, Is.EquivalentTo(expectedTrainings));
+            Assert.That(actualTrainings, Is.EquivalentTo(expectedTrainingDtos));
         }
+
 
         [Test]
         public async Task GetAllTrainings_ReturnsNoContentWhenNoTrainings()
@@ -156,9 +204,8 @@ namespace ApiMySQL.Tests.Controllers
             // Arrange
             var trainingRepositoryMock = new Mock<ITrainingRepository>();
             var loggerMock = new Mock<ILogger<TrainingController>>();
-            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object);
-
-            // No se configura el mock para devolver entrenamientos, simula el escenario de que no hay entrenamientos en la base de datos.
+            var mapperMock = new Mock<IMapper>();
+            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object, mapperMock.Object);
 
             // Act
             var result = await controller.GetAllTrainings() as NoContentResult;
@@ -169,15 +216,15 @@ namespace ApiMySQL.Tests.Controllers
         }
 
         [Test]
-        public async Task DeleteTrainingAndTrainingLines_ValidId_ReturnsNoContent()
+        public async Task DeleteTrainingAndTrainingLines_ValidId_ReturnsOkResult()
         {
             // Arrange
             var trainingRepositoryMock = new Mock<ITrainingRepository>();
             var loggerMock = new Mock<ILogger<TrainingController>>();
-            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object);
+            var mapperMock = new Mock<IMapper>();
+            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object, mapperMock.Object);
             var trainingIdToDelete = 1;
 
-            // Configurar el comportamiento del mock para devolver un Training vacío
             trainingRepositoryMock.Setup(repo => repo.GetTraining(trainingIdToDelete)).ReturnsAsync(new Training());
 
             // Act
@@ -186,7 +233,6 @@ namespace ApiMySQL.Tests.Controllers
             // Assert
             Assert.That(result, Is.TypeOf<OkObjectResult>());
 
-            // Verificar que el método DeleteTrainingAndTrainingLines se llamó con el id esperado
             trainingRepositoryMock.Verify(repo => repo.DeleteTrainingAndTrainingLines(trainingIdToDelete), Times.Once);
         }
 
@@ -196,10 +242,10 @@ namespace ApiMySQL.Tests.Controllers
             // Arrange
             var trainingRepositoryMock = new Mock<ITrainingRepository>();
             var loggerMock = new Mock<ILogger<TrainingController>>();
-            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object);
+            var mapperMock = new Mock<IMapper>();
+            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object, mapperMock.Object);
             var trainingIdToDelete = 1;
 
-            // Configurar el comportamiento del mock para devolver null, indicando que el Training no existe
             trainingRepositoryMock.Setup(repo => repo.GetTraining(trainingIdToDelete)).ReturnsAsync((Training)null);
 
             // Act
@@ -208,7 +254,6 @@ namespace ApiMySQL.Tests.Controllers
             // Assert
             Assert.That(result, Is.TypeOf<NoContentResult>());
 
-            // Verificar que el método DeleteTrainingAndTrainingLines no se llamó, ya que no debería existir el entrenamiento
             trainingRepositoryMock.Verify(repo => repo.DeleteTrainingAndTrainingLines(It.IsAny<int>()), Times.Never);
         }
 
@@ -218,10 +263,10 @@ namespace ApiMySQL.Tests.Controllers
             // Arrange
             var trainingRepositoryMock = new Mock<ITrainingRepository>();
             var loggerMock = new Mock<ILogger<TrainingController>>();
-            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object);
+            var mapperMock = new Mock<IMapper>();
+            var controller = new TrainingController(trainingRepositoryMock.Object, loggerMock.Object, mapperMock.Object);
             var trainingIdToDelete = 1;
 
-            // Configurar el comportamiento del mock para lanzar una excepción al llamar a DeleteTrainingAndTrainingLines
             trainingRepositoryMock.Setup(repo => repo.GetTraining(trainingIdToDelete)).ReturnsAsync(new Training());
             trainingRepositoryMock.Setup(repo => repo.DeleteTrainingAndTrainingLines(trainingIdToDelete)).ThrowsAsync(new Exception("Simulated exception"));
 
@@ -235,9 +280,7 @@ namespace ApiMySQL.Tests.Controllers
             Assert.That(objectResult.StatusCode, Is.EqualTo(500));
             Assert.That(objectResult.Value, Is.EqualTo("Error interno del servidor."));
 
-            // Verificar que se llamó al método DeleteTrainingAndTrainingLines con el id esperado
             trainingRepositoryMock.Verify(repo => repo.DeleteTrainingAndTrainingLines(trainingIdToDelete), Times.Once);
         }
     }
 }
-

@@ -10,6 +10,7 @@ namespace ApiMySQL.Model
         public string Role { get; set; }
         public int Active { get; set; }
         public DateTime? LastUpdated { get; set; }
+        public string SchemaName { get; set; }  // Campo para almacenar el esquema de base de datos del cliente
 
         //[Key]
         //public int Id { get; set; }
@@ -22,6 +23,6 @@ namespace ApiMySQL.Model
         //public int Active { get; set; }
         //public DateTime? LastUpdated { get; set; }
         //[Required]
-        public string SchemaName { get; set; } // Campo para almacenar el esquema de base de datos del cliente
+
     }
 }

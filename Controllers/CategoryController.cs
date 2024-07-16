@@ -1,12 +1,16 @@
-﻿using ApiMySQL.Model;
+﻿using ApiMySQL.DTOs;
+using ApiMySQL.Model;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 using Swashbuckle.AspNetCore.Annotations;
 using ApiMySQL.Repositories;
 using Microsoft.AspNetCore.Authorization;
+using AutoMapper;
 
 namespace ApiMySQL.Controllers
 {
@@ -17,18 +21,20 @@ namespace ApiMySQL.Controllers
     {
         private readonly ICategoryRepository _categoryRepository;
         private readonly ILogger<CategoryController> _logger;
+        private readonly IMapper _mapper;
 
-        public CategoryController(ICategoryRepository categoryRepository, ILogger<CategoryController> logger)
+        public CategoryController(ICategoryRepository categoryRepository, ILogger<CategoryController> logger, IMapper mapper)
         {
             _categoryRepository = categoryRepository;
             _logger = logger;
+            _mapper = mapper;
         }
 
         /// <summary>
         /// Obtiene todas las categorías de grupos musculares asociadas a un grupo muscular específico
         /// </summary>
         /// <remarks>
-        /// Devuelve una lista de objetos de tipo Category asociados al grupo muscular con el ID especificado.
+        /// Devuelve una lista de objetos de tipo CategoryDto asociados al grupo muscular con el ID especificado.
         /// 
         /// Sample request:
         /// 
@@ -43,21 +49,22 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<Category>), description: "successful operation")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<CategoryDto>), description: "successful operation")]
         public async Task<IActionResult> GetMuscleGroupCategories(int id)
         {
             try
             {
                 var categories = await _categoryRepository.GetMuscleGroupCategories(id);
+                var categoriesDTO = _mapper.Map<List<CategoryDto>>(categories);
 
-                if (categories == null || categories.Count() == 0)
+                if (categoriesDTO == null || categoriesDTO.Count() == 0)
                 {
                     _logger.LogError("****Error en la operación GetMuscleGroupCategories, no se encontraron categorías para el grupo muscular especificado");
                     return NoContent();
                 }
 
                 _logger.LogInformation("****Operación GetMuscleGroupCategories ejecutada correctamente.");
-                return Ok(categories);
+                return Ok(categoriesDTO);
             }
             catch (Exception ex)
             {
@@ -70,7 +77,7 @@ namespace ApiMySQL.Controllers
         /// Obtiene una categoría específica por su ID
         /// </summary>
         /// <remarks>
-        /// Devuelve un objeto de tipo Category con el ID especificado.
+        /// Devuelve un objeto de tipo CategoryDto con el ID especificado.
         /// 
         /// Sample request:
         /// 
@@ -85,21 +92,22 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [SwaggerResponse(statusCode: 200, type: typeof(Category), description: "successful operation")]
+        [SwaggerResponse(statusCode: 200, type: typeof(CategoryDto), description: "successful operation")]
         public async Task<IActionResult> GetCategory(int id)
         {
             try
             {
                 var existingCategory = await _categoryRepository.GetCategory(id);
+                var existingCategoryDto = _mapper.Map<CategoryDto>(existingCategory);
 
-                if (existingCategory == null)
+                if (existingCategoryDto == null)
                 {
                     _logger.LogError("****Error en la operación GetCategory, no existe la categoría especificada");
                     return NoContent();
                 }
 
                 _logger.LogInformation("****Operación GetCategory ejecutada correctamente.");
-                return Ok(existingCategory);
+                return Ok(existingCategoryDto);
             }
             catch (Exception ex)
             {
@@ -112,17 +120,17 @@ namespace ApiMySQL.Controllers
         /// Inserta una nueva categoría
         /// </summary>
         /// <remarks>
-        /// Recibe un objeto Category y lo inserta en la BBDD.
+        /// Recibe un objeto CategoryDto y lo inserta en la BBDD.
         /// 
         /// Sample request:
         /// 
         ///     {
         ///      "name": "Nueva Categoría",
-        ///      "idMuscleGroup": 10
+        ///      "muscleGroupID": 10
         ///     }
         ///     
         /// </remarks>
-        /// <param name="category">Objeto Category a insertar</param>
+        /// <param name="CategoryDto">Objeto CategoryDto a insertar</param>
         /// <response code="201">Categoría insertada correctamente</response>
         /// <response code="500">Internal server error</response>
         /// <response code="400">Datos incorrectos o grupo muscular no encontrado</response>        
@@ -130,25 +138,36 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> InsertCategory([FromBody] Category category)
+        public async Task<IActionResult> InsertCategory([FromBody] CategoryDto CategoryDto)
         {
             try
             {
-                if (category == null)
+                if (CategoryDto == null)
                     return BadRequest();
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                if (category.MuscleGroupID == 0)
+                if (CategoryDto.MuscleGroupID == 0)
                 {
                     _logger.LogError("****Error en la operación InsertCategory, no existe el grupo muscular");
                     return BadRequest();
                 }
+
+                var category = _mapper.Map<Category>(CategoryDto);
                 category.LastUpdate = DateTime.Now;
+
                 var created = await _categoryRepository.InsertCategory(category);
-                _logger.LogInformation("****Operación InsertCategory ejecutada correctamente.");
-                return Created("created", created);
+
+                if (!created)
+        {
+            _logger.LogError("****Error en la operación InsertCategory, no se pudo insertar la categoría");
+            return StatusCode(500, "Error interno del servidor.");
+        }
+
+        var categoryDtoResult = _mapper.Map<CategoryDto>(category);
+        _logger.LogInformation("****Operación InsertCategory ejecutada correctamente.");
+        return CreatedAtAction(nameof(GetCategory), new { id = categoryDtoResult.ID }, categoryDtoResult);
             }
             catch (Exception ex)
             {
@@ -161,18 +180,18 @@ namespace ApiMySQL.Controllers
         /// Actualiza una categoría existente
         /// </summary>
         /// <remarks>
-        /// Recibe un objeto Category y lo actualiza en la BBDD.
+        /// Recibe un objeto CategoryDto y lo actualiza en la BBDD.
         /// 
         /// Sample request:
         /// 
         ///     {
         ///      "id": 4,
         ///      "name": "Categoría Actualizada",
-        ///      "idMuscleGroup": 10
+        ///      "muscleGroupID": 10
         ///     }
         ///     
         /// </remarks>
-        /// <param name="category">Objeto Category a actualizar</param>
+        /// <param name="CategoryDto">Objeto CategoryDto a actualizar</param>
         /// <response code="204">Categoría actualizada correctamente</response>
         /// <response code="500">Internal server error</response>
         /// <response code="400">Datos incorrectos o categoría no encontrada</response>        
@@ -180,26 +199,29 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> UpdateCategory([FromBody] Category category)
+        public async Task<IActionResult> UpdateCategory([FromBody] CategoryDto CategoryDto)
         {
             try
             {
-                if (category == null)
+                if (CategoryDto == null)
                     return BadRequest();
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
                 // Verificar si la categoría existe antes de intentar actualizarla
-                var existingCategory = await _categoryRepository.GetCategory(category.ID);
+                var existingCategory = await _categoryRepository.GetCategory(CategoryDto.ID);
                 if (existingCategory == null)
                 {
                     _logger.LogError("****Error en la operación UpdateCategory, no existe la categoría a actualizar");
                     return BadRequest();
                 }
 
-                category.LastUpdate = DateTime.Now;
-                await _categoryRepository.UpdateCategory(category);
+                var categoryToUpdate = _mapper.Map<Category>(CategoryDto);
+                categoryToUpdate.LastUpdate = DateTime.Now;
+
+                await _categoryRepository.UpdateCategory(categoryToUpdate);
+
                 _logger.LogInformation("****Operación UpdateCategory ejecutada correctamente.");
                 return NoContent();
             }
@@ -241,6 +263,7 @@ namespace ApiMySQL.Controllers
                 }
 
                 await _categoryRepository.DeleteCategory(id);
+
                 _logger.LogInformation("****Operación DeleteCategory ejecutada correctamente.");
                 return NoContent();
             }

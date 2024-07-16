@@ -1,30 +1,38 @@
-﻿using ApiMySQL.Model;
+﻿using ApiMySQL.DTOs;
+using ApiMySQL.Model;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using ApiMySQL.Repositories;
 using Microsoft.AspNetCore.Authorization;
+using AutoMapper;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace ApiMySQL.Controllers
 {
-       [Authorize]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class ExerciseController : ControllerBase
     {
         private readonly IExerciseRepository _exerciseRepository;
         private readonly ILogger<ExerciseController> _logger;
+        private readonly IMapper _mapper;
 
-        public ExerciseController(IExerciseRepository exerciseRepository, ILogger<ExerciseController> logger)
+        public ExerciseController(IExerciseRepository exerciseRepository, ILogger<ExerciseController> logger, IMapper mapper)
         {
             _exerciseRepository = exerciseRepository;
             _logger = logger;
+            _mapper = mapper;
         }
 
         /// <summary>
         /// Obtiene los ejercicios de una categoría específica.
         /// </summary>
         /// <remarks>
-        /// Devuelve una lista de objetos de tipo Exercise para una categoría dada.
+        /// Devuelve una lista de objetos de tipo ExerciseDto para una categoría dada.
         /// 
         /// Sample request:
         /// 
@@ -39,7 +47,7 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<Exercise>), description: "successful operation")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<ExerciseDto>), description: "successful operation")]
         public async Task<IActionResult> GetCategoryExercises(int id)
         {
             try
@@ -52,8 +60,9 @@ namespace ApiMySQL.Controllers
                     return NoContent();
                 }
 
+                var exerciseDtos = _mapper.Map<List<ExerciseDto>>(exercises);
                 _logger.LogInformation("****Operación GetCategoryExercises ejecutada correctamente.");
-                return Ok(exercises);
+                return Ok(exerciseDtos);
             }
             catch (Exception ex)
             {
@@ -66,7 +75,7 @@ namespace ApiMySQL.Controllers
         /// Obtiene un ejercicio por su ID
         /// </summary>
         /// <remarks>
-        /// Devuelve un objeto de tipo Exercise con el ID especificado.
+        /// Devuelve un objeto de tipo ExerciseDto con el ID especificado.
         /// 
         /// Sample request:
         /// 
@@ -81,7 +90,7 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [SwaggerResponse(statusCode: 200, type: typeof(Exercise), description: "successful operation")]
+        [SwaggerResponse(statusCode: 200, type: typeof(ExerciseDto), description: "successful operation")]
         public async Task<IActionResult> GetExercise(int id)
         {
             try
@@ -94,8 +103,9 @@ namespace ApiMySQL.Controllers
                     return NoContent();
                 }
 
+                var exerciseDto = _mapper.Map<ExerciseDto>(existingExercise);
                 _logger.LogInformation("****Operación GetExercise ejecutada correctamente.");
-                return Ok(existingExercise);
+                return Ok(exerciseDto);
             }
             catch (Exception ex)
             {
@@ -108,7 +118,7 @@ namespace ApiMySQL.Controllers
         /// Inserta un nuevo ejercicio
         /// </summary>
         /// <remarks>
-        /// Recibe un objeto Exercise y lo inserta en la BBDD.
+        /// Recibe un objeto ExerciseDto y lo inserta en la BBDD.
         /// 
         /// Sample request:
         /// 
@@ -119,7 +129,7 @@ namespace ApiMySQL.Controllers
         ///     }
         ///     
         /// </remarks>
-        /// <param name="exercise">Objeto Exercise a insertar</param>
+        /// <param name="exerciseDto">Objeto ExerciseDto a insertar</param>
         /// <response code="201">Ejercicio insertado correctamente</response>
         /// <response code="500">Internal server error</response>
         /// <response code="400">Datos incorrectos</response>
@@ -127,17 +137,19 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> InsertExercise([FromBody] Exercise exercise)
+        public async Task<IActionResult> InsertExercise([FromBody] ExerciseDto exerciseDto)
         {
             try
             {
-                if (exercise == null)
+                if (exerciseDto == null)
                     return BadRequest();
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
+                var exercise = _mapper.Map<Exercise>(exerciseDto);
                 exercise.LastUpdated = DateTime.Now;
+
                 var created = await _exerciseRepository.InsertExercise(exercise);
                 _logger.LogInformation("****Operación InsertExercise ejecutada correctamente.");
                 return Created("created", created);
@@ -153,7 +165,7 @@ namespace ApiMySQL.Controllers
         /// Actualiza un ejercicio existente
         /// </summary>
         /// <remarks>
-        /// Recibe un objeto Exercise y lo actualiza en la BBDD.
+        /// Recibe un objeto ExerciseDto y lo actualiza en la BBDD.
         /// 
         /// Sample request:
         /// 
@@ -165,7 +177,8 @@ namespace ApiMySQL.Controllers
         ///     }
         ///     
         /// </remarks>
-        /// <param name="exercise">Objeto Exercise a actualizar</param>
+        /// <param name="id">Identificador del ejercicio a actualizar</param>
+        /// <param name="exerciseDto">Objeto ExerciseDto a actualizar</param>
         /// <response code="204">Ejercicio actualizado correctamente</response>
         /// <response code="500">Internal server error</response>
         /// <response code="400">Datos incorrectos o ejercicio no encontrado</response>
@@ -173,24 +186,26 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> UpdateExercise([FromBody] Exercise exercise)
+        public async Task<IActionResult> UpdateExercise([FromBody] ExerciseDto exerciseDto)
         {
             try
             {
-                if (exercise == null)
+                if (exerciseDto == null)
                     return BadRequest();
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                // Verificar si el ejercicio existe antes de intentar actualizarlo
-                var existingExercise = await _exerciseRepository.GetExercise(exercise.ID);
+                var existingExercise = await _exerciseRepository.GetExercise(exerciseDto.ID);
                 if (existingExercise == null)
                 {
                     _logger.LogError("****Error en la operación UpdateExercise, no existe el ejercicio a actualizar");
                     return BadRequest();
                 }
+
+                var exercise = _mapper.Map<Exercise>(exerciseDto);
                 exercise.LastUpdated = DateTime.Now;
+
                 await _exerciseRepository.UpdateExercise(exercise);
                 _logger.LogInformation("****Operación UpdateExercise ejecutada correctamente.");
                 return NoContent();
@@ -225,7 +240,6 @@ namespace ApiMySQL.Controllers
         {
             try
             {
-                // Verificar si el ejercicio existe antes de intentar eliminarlo
                 var existingExercise = await _exerciseRepository.GetExercise(id);
                 if (existingExercise == null)
                 {

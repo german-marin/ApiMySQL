@@ -1,5 +1,6 @@
 ﻿using ApiMySQL.Repositories;
 using ApiMySQL.Model;
+using ApiMySQL.DTOs;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.AspNetCore.Authorization;
@@ -7,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using AutoMapper;
 
 namespace ApiMySQL.Controllers
 {
@@ -17,18 +19,20 @@ namespace ApiMySQL.Controllers
     {
         private readonly IMuscleGroupRepository _muscleGroupRepository;
         private readonly ILogger<MuscleGroupController> _logger;
+        private readonly IMapper _mapper; 
 
-        public MuscleGroupController(IMuscleGroupRepository muscleGroupRepository, ILogger<MuscleGroupController> logger)
+        public MuscleGroupController(IMuscleGroupRepository muscleGroupRepository, ILogger<MuscleGroupController> logger, IMapper mapper)
         {
             _muscleGroupRepository = muscleGroupRepository;
             _logger = logger;
+            _mapper = mapper; 
         }
 
         /// <summary>
         /// Obtiene todos los grupos musculares
         /// </summary>
         /// <remarks>
-        /// Devuelve una lista de objetos de tipo MuscleGroup con todos los grupos musculares.
+        /// Devuelve una lista de objetos de tipo MuscleGroupDto con todos los grupos musculares.
         /// 
         /// Sample request:
         /// 
@@ -42,11 +46,11 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<MuscleGroup>), description: "successful operation")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<MuscleGroupDto>), description: "successful operation")]
         public async Task<IActionResult> GetAllMuscleGroup()
         {
             try
-            {                
+            {
                 var muscleGroups = await _muscleGroupRepository.GetAllMuscleGroup();
 
                 if (muscleGroups == null || muscleGroups.Count() == 0)
@@ -55,8 +59,10 @@ namespace ApiMySQL.Controllers
                     return NoContent();
                 }
 
+                var muscleGroupDtos = _mapper.Map<IEnumerable<MuscleGroupDto>>(muscleGroups); 
+
                 _logger.LogInformation("****Operación GetAllMuscleGroup ejecutada correctamente.");
-                return Ok(muscleGroups);
+                return Ok(muscleGroupDtos);
             }
             catch (Exception ex)
             {
@@ -69,7 +75,7 @@ namespace ApiMySQL.Controllers
         /// Obtiene un grupo muscular por su ID
         /// </summary>
         /// <remarks>
-        /// Devuelve un objeto de tipo MuscleGroup con el ID especificado.
+        /// Devuelve un objeto de tipo MuscleGroupDto con el ID especificado.
         /// 
         /// Sample request:
         /// 
@@ -84,7 +90,7 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [SwaggerResponse(statusCode: 200, type: typeof(MuscleGroup), description: "successful operation")]
+        [SwaggerResponse(statusCode: 200, type: typeof(MuscleGroupDto), description: "successful operation")]
         public async Task<IActionResult> GetMuscleGroup(int id)
         {
             try
@@ -97,8 +103,10 @@ namespace ApiMySQL.Controllers
                     return NoContent();
                 }
 
+                var muscleGroupDto = _mapper.Map<MuscleGroupDto>(existingMuscleGroup);
+
                 _logger.LogInformation("****Operación GetMuscleGroup ejecutada correctamente.");
-                return Ok(existingMuscleGroup);
+                return Ok(muscleGroupDto);
             }
             catch (Exception ex)
             {
@@ -111,16 +119,19 @@ namespace ApiMySQL.Controllers
         /// Inserta un nuevo grupo muscular
         /// </summary>
         /// <remarks>
-        /// Recibe un objeto MuscleGroup y lo inserta en la BBDD.
+        /// Recibe un objeto MuscleGroupDto y lo inserta en la BBDD.
         /// 
         /// Sample request:
         /// 
         ///     {
-        ///      "name": "Nuevo Grupo Muscular"
+        ///      "description": "Nuevo Grupo Muscular",
+        ///      "imageFront": "imagen_frontal_url",
+        ///      "imageRear": "imagen_trasera_url",
+        ///      "lastUpdate": "2023-12-12T00:00:00Z"
         ///     }
         ///     
         /// </remarks>
-        /// <param name="muscleGroup">Objeto MuscleGroup a insertar</param>
+        /// <param name="muscleGroupDto">Objeto MuscleGroupDto a insertar</param>
         /// <response code="201">Grupo muscular insertado correctamente</response>
         /// <response code="500">Internal server error</response>
         /// <response code="400">Datos incorrectos</response>
@@ -128,17 +139,20 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> InsertMuscleGroup([FromBody] MuscleGroup muscleGroup)
+        public async Task<IActionResult> InsertMuscleGroup([FromBody] MuscleGroupDto muscleGroupDto)
         {
             try
             {
-                if (muscleGroup == null)
+                if (muscleGroupDto == null)
                     return BadRequest();
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
+                var muscleGroup = _mapper.Map<MuscleGroup>(muscleGroupDto);
+
                 var created = await _muscleGroupRepository.InsertMuscleGroup(muscleGroup);
+      
                 _logger.LogInformation("****Operación InsertMuscleGroup ejecutada correctamente.");
                 return Created("created", created);
             }
@@ -153,18 +167,20 @@ namespace ApiMySQL.Controllers
         /// Actualiza un grupo muscular existente
         /// </summary>
         /// <remarks>
-        /// Recibe un objeto MuscleGroup y lo actualiza en la BBDD.
+        /// Recibe un objeto MuscleGroupDto y lo actualiza en la BBDD.
         /// 
         /// Sample request:
         /// 
         ///     {
         ///      "id": 4,
-        ///      "name": "Grupo Muscular Actualizado",
-        ///      "description": "Descripción actualizada del grupo muscular"
+        ///      "description": "Grupo Muscular Actualizado",
+        ///      "imageFront": "imagen_frontal_actualizada_url",
+        ///      "imageRear": "imagen_trasera_actualizada_url",
+        ///      "lastUpdate": "2023-12-12T00:00:00Z"
         ///     }
         ///     
         /// </remarks>
-        /// <param name="muscleGroup">Objeto MuscleGroup a actualizar</param>
+        /// <param name="muscleGroupDto">Objeto MuscleGroupDto a actualizar</param>
         /// <response code="204">MuscleGroup actualizado correctamente</response>
         /// <response code="500">Internal server error</response>
         /// <response code="400">Datos incorrectos o MuscleGroup no encontrado</response>        
@@ -172,22 +188,24 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> UpdateMuscleGroup([FromBody] MuscleGroup muscleGroup)
+        public async Task<IActionResult> UpdateMuscleGroup([FromBody] MuscleGroupDto muscleGroupDto)
         {
             try
             {
-                if (muscleGroup == null)
+                if (muscleGroupDto == null)
                     return BadRequest();
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
-                var existingMuscleGroup = await _muscleGroupRepository.GetMuscleGroup(muscleGroup.ID);
+                var existingMuscleGroup = await _muscleGroupRepository.GetMuscleGroup(muscleGroupDto.ID);
                 if (existingMuscleGroup == null)
                 {
                     _logger.LogError("****Error en la operación UpdateMuscleGroup, no existe el grupo muscular a modificar");
                     return BadRequest();
                 }
+
+                var muscleGroup = _mapper.Map(muscleGroupDto, existingMuscleGroup);
 
                 await _muscleGroupRepository.UpdateMuscleGroup(muscleGroup);
                 _logger.LogInformation("****Operación UpdateMuscleGroup ejecutada correctamente.");
@@ -199,6 +217,7 @@ namespace ApiMySQL.Controllers
                 return StatusCode(500, "Error interno del servidor.");
             }
         }
+
         /// <summary>
         /// Elimina un grupo muscular por su ID
         /// </summary>
@@ -212,13 +231,12 @@ namespace ApiMySQL.Controllers
         /// </remarks>
         /// <param name="id">Identificador del MuscleGroup</param>
         /// <response code="200">MuscleGroup eliminado</response>
-        /// <response code="204">MuscleGroup no encontrado</response>
         /// <response code="500">Internal server error</response>
-        [HttpDelete]
+        /// <response code="404">MuscleGroup no encontrado</response>
+        [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [SwaggerResponse(statusCode: 200, type: typeof(bool), description: "MuscleGroup eliminado")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteMuscleGroup(int id)
         {
             try
@@ -227,11 +245,12 @@ namespace ApiMySQL.Controllers
                 if (existingMuscleGroup == null)
                 {
                     _logger.LogError("****Error en la operación DeleteMuscleGroup, no existe el grupo muscular a eliminar");
-                    return NoContent();
+                    return NotFound();
                 }
+
                 await _muscleGroupRepository.DeleteMuscleGroup(id);
                 _logger.LogInformation("****Operación DeleteMuscleGroup ejecutada correctamente.");
-                return Ok(true);
+                return Ok();
             }
             catch (Exception ex)
             {

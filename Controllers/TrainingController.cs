@@ -1,10 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ApiMySQL.Repositories;
-using ApiMySQL.Model;
+﻿using ApiMySQL.Model;
+using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using ApiMySQL.Repositories;
 using Microsoft.AspNetCore.Authorization;
-using Castle.Core.Resource;
-
+using AutoMapper;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using System;
+using ApiMySQL.DTOs;
 
 namespace ApiMySQL.Controllers
 {
@@ -15,11 +20,13 @@ namespace ApiMySQL.Controllers
     {
         private readonly ITrainingRepository _trainingRepository;
         private readonly ILogger<TrainingController> _logger;
+        private readonly IMapper _mapper;
 
-        public TrainingController(ITrainingRepository trainingRepository, ILogger<TrainingController> logger)
+        public TrainingController(ITrainingRepository trainingRepository, ILogger<TrainingController> logger, IMapper mapper)
         {
             _trainingRepository = trainingRepository;
             _logger = logger;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -40,13 +47,20 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [SwaggerResponse(statusCode: 200, type: typeof(Training), description: "successful operation")]
+        [SwaggerResponse(statusCode: 200, type: typeof(TrainingDto), description: "successful operation")]
         public async Task<IActionResult> GetTraining(int id)
         {
             try
             {
                 _logger.LogInformation("****Operación GetTraining ejecutada correctamente.");
-                return Ok(await _trainingRepository.GetTraining(id));
+                var training = await _trainingRepository.GetTraining(id);
+                if (training == null)
+                {
+                    _logger.LogError("****Error en la operación GetTraining, no se encontró el training");
+                    return NoContent();
+                }
+                var trainingDto = _mapper.Map<TrainingDto>(training);
+                return Ok(trainingDto);
             }
             catch (Exception ex)
             {
@@ -54,6 +68,7 @@ namespace ApiMySQL.Controllers
                 return StatusCode(500, "Error interno del servidor.");
             }
         }
+
         /// <summary>
         /// Inserta un nuevo Training
         /// </summary>
@@ -74,17 +89,17 @@ namespace ApiMySQL.Controllers
         /// <param name="training">Crea un nuevo training</param>
         /// <response code="201">Successful operation</response>
         /// <response code="500">Internal server error</response>
-        /// <response code="400">Incorrect Data or client not exist</response>        
+        /// <response code="400">Incorrect Data or client not exist</response>  
         [Route("InsertTraining")]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]        
-        public async Task<IActionResult> InsertTraining([FromBody] Training training)
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> InsertTraining([FromBody] TrainingDto trainingDto)
         {
             try
             {
-                if (training == null)
+                if (trainingDto == null)
                 {
                     _logger.LogError("****Error en la operación InsertTraining. Training nulo");
                     return BadRequest();
@@ -94,14 +109,15 @@ namespace ApiMySQL.Controllers
                 {
                     _logger.LogError("****Error en la operación InsertTraining. ModelState Invalid");
                     return BadRequest(ModelState);
-                }                    
+                }
                 //comprobamos si existe el cliente
-                if (await _trainingRepository.CustomerExist(training.CustomerID) is false)
+                if (await _trainingRepository.CustomerExist(trainingDto.CustomerID) is false)
                 {
                     _logger.LogInformation("****El cliente seleccionado no existe");
                     return BadRequest();
                 }
 
+                var training = _mapper.Map<Training>(trainingDto);
                 training.LastUpdate = DateTime.Now;
                 var created = await _trainingRepository.InsertTraining(training);
                 _logger.LogInformation("****Operación InsertTraining ejecutada correctamente.");
@@ -113,6 +129,7 @@ namespace ApiMySQL.Controllers
                 return StatusCode(500, "Error interno del servidor.");
             }
         }
+
         /// <summary>
         /// Modifica un Training existente
         /// </summary>
@@ -140,21 +157,22 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> UpdateTraining([FromBody] Training training)
+        public async Task<IActionResult> UpdateTraining([FromBody] TrainingDto trainingDto)
         {
             try
             {
-                if (training == null)
+                if (trainingDto == null)
                     return BadRequest();
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
                 //comprobamos si existe el cliente
-                if (await _trainingRepository.CustomerExist(training.CustomerID) is false)
+                if (await _trainingRepository.CustomerExist(trainingDto.CustomerID) is false)
                 {
                     _logger.LogInformation("****El cliente seleccionado no existe");
                     return BadRequest();
                 }
 
+                var training = _mapper.Map<Training>(trainingDto);
                 training.LastUpdate = DateTime.Now;
                 await _trainingRepository.UpdateTraining(training);
                 _logger.LogInformation("****Operación UpdateTraining ejecutada correctamente.");
@@ -166,6 +184,7 @@ namespace ApiMySQL.Controllers
                 return StatusCode(500, "Error interno del servidor.");
             }
         }
+
         /// <summary>
         /// Elimina un único Training
         /// </summary>
@@ -212,6 +231,7 @@ namespace ApiMySQL.Controllers
                 return StatusCode(500, "Error interno del servidor.");
             }
         }
+
         /// <summary>
         /// Elimina un Training y sus TrainingsLines
         /// </summary>
@@ -233,7 +253,7 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [SwaggerResponse(statusCode: 200, type: typeof(bool), description: "successful operation")]
         public async Task<IActionResult> DeleteTrainingAndTrainingLines(int id)
-        {  
+        {
             try
             {
                 // Verificar si el entrenamiento existe antes de intentar eliminarlo
@@ -289,7 +309,11 @@ namespace ApiMySQL.Controllers
                 }
 
                 _logger.LogInformation("****Operación GetAllTrainings ejecutada correctamente.");
-                return Ok(trainings);
+
+                // Mapear los trainings a TrainingDTOs antes de devolverlos
+                var trainingsDTOs = _mapper.Map<IEnumerable<TrainingDto>>(trainings);
+
+                return Ok(trainingsDTOs);
             }
             catch (Exception ex)
             {

@@ -1,13 +1,11 @@
 ﻿using ApiMySQL.Controllers;
+using ApiMySQL.DTOs;
 using ApiMySQL.Model;
 using ApiMySQL.Repositories;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Moq;
-using NUnit.Framework;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Assert = NUnit.Framework.Assert;
 
 namespace ApiMySQL.Tests.Controllers
 {
@@ -16,6 +14,7 @@ namespace ApiMySQL.Tests.Controllers
     {
         private Mock<ICustomerRepository> _customerRepositoryMock;
         private Mock<ILogger<CustomerController>> _loggerMock;
+        private IMapper _mapper;
         private CustomerController _controller;
 
         [SetUp]
@@ -23,7 +22,11 @@ namespace ApiMySQL.Tests.Controllers
         {
             _customerRepositoryMock = new Mock<ICustomerRepository>();
             _loggerMock = new Mock<ILogger<CustomerController>>();
-            _controller = new CustomerController(_customerRepositoryMock.Object, _loggerMock.Object);
+
+            var config = new MapperConfiguration(cfg => cfg.CreateMap<Customer, CustomerDto>().ReverseMap());
+            _mapper = config.CreateMapper();
+
+            _controller = new CustomerController(_customerRepositoryMock.Object, _loggerMock.Object, _mapper);
         }
 
         [Test]
@@ -39,8 +42,8 @@ namespace ApiMySQL.Tests.Controllers
             // Assert
             Assert.NotNull(result);
             Assert.AreEqual(200, result.StatusCode);
-            Assert.IsInstanceOf<List<Customer>>(result.Value);
-            var returnCustomers = result.Value as List<Customer>;
+            Assert.IsInstanceOf<List<CustomerDto>>(result.Value);
+            var returnCustomers = result.Value as List<CustomerDto>;
             Assert.AreEqual(1, returnCustomers.Count);
         }
 
@@ -57,8 +60,8 @@ namespace ApiMySQL.Tests.Controllers
             // Assert
             Assert.NotNull(result);
             Assert.AreEqual(200, result.StatusCode);
-            Assert.IsInstanceOf<Customer>(result.Value);
-            var returnCustomer = result.Value as Customer;
+            Assert.IsInstanceOf<CustomerDto>(result.Value);
+            var returnCustomer = result.Value as CustomerDto;
             Assert.AreEqual(1, returnCustomer.ID);
         }
 
@@ -79,55 +82,58 @@ namespace ApiMySQL.Tests.Controllers
         public async Task InsertCustomer_ValidCustomer_ReturnsCreatedAtActionResult()
         {
             // Arrange
-            var customer = new Customer { ID = 1, FirstName = "John", LastName1 = "Doe" };
-            _customerRepositoryMock.Setup(repo => repo.InsertCustomer(customer)).ReturnsAsync(true);
+            var customerDto = new CustomerDto { FirstName = "John", LastName1 = "Doe" };
+            _customerRepositoryMock.Setup(repo => repo.InsertCustomer(It.IsAny<Customer>())).ReturnsAsync(true);
 
             // Act
-            var result = await _controller.InsertCustomer(customer) as CreatedAtActionResult;
+            var result = await _controller.InsertCustomer(customerDto) as CreatedAtActionResult;
 
             // Assert
             Assert.NotNull(result);
             Assert.AreEqual(201, result.StatusCode);
-            Assert.IsInstanceOf<Customer>(result.Value);
-            var returnCustomer = result.Value as Customer;
-            Assert.AreEqual(1, returnCustomer.ID);
+            Assert.IsInstanceOf<CustomerDto>(result.Value);
         }
 
         [Test]
-        public async Task InsertCustomer_NullCustomer_ReturnsBadRequest()
+        public async Task InsertCustomer_InvalidCustomer_ReturnsBadRequest()
         {
+            // Arrange
+            _controller.ModelState.AddModelError("FirstName", "Required");
+
             // Act
-            var result = await _controller.InsertCustomer(null) as BadRequestResult;
+            var result = await _controller.InsertCustomer(null);
 
             // Assert
-            Assert.NotNull(result);
-            Assert.AreEqual(400, result.StatusCode);
+            Assert.IsInstanceOf<BadRequestResult>(result);
         }
 
         [Test]
         public async Task UpdateCustomer_ValidCustomer_ReturnsNoContentResult()
         {
             // Arrange
+            var customerDto = new CustomerDto { ID = 1, FirstName = "John", LastName1 = "Doe" };
             var customer = new Customer { ID = 1, FirstName = "John", LastName1 = "Doe" };
             _customerRepositoryMock.Setup(repo => repo.GetCustomer(1)).ReturnsAsync(customer);
-            _customerRepositoryMock.Setup(repo => repo.UpdateCustomer(customer)).ReturnsAsync(true);
+            _customerRepositoryMock.Setup(repo => repo.UpdateCustomer(It.IsAny<Customer>())).ReturnsAsync(true);
 
             // Act
-            var result = await _controller.UpdateCustomer(customer);
+            var result = await _controller.UpdateCustomer(customerDto);
 
             // Assert
             Assert.IsInstanceOf<NoContentResult>(result);
         }
 
         [Test]
-        public async Task UpdateCustomer_NullCustomer_ReturnsBadRequest()
+        public async Task UpdateCustomer_InvalidCustomer_ReturnsBadRequest()
         {
+            // Arrange
+            _controller.ModelState.AddModelError("FirstName", "Required");
+
             // Act
-            var result = await _controller.UpdateCustomer(null) as BadRequestResult;
+            var result = await _controller.UpdateCustomer(null);
 
             // Assert
-            Assert.NotNull(result);
-            Assert.AreEqual(400, result.StatusCode);
+            Assert.IsInstanceOf<BadRequestResult>(result);
         }
 
         [Test]

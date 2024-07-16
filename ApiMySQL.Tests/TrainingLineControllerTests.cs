@@ -1,159 +1,136 @@
 ﻿using ApiMySQL.Controllers;
+using ApiMySQL.DTOs;
 using ApiMySQL.Model;
 using ApiMySQL.Repositories;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
-using Assert = NUnit.Framework.Assert;
-using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace ApiMySQL.Tests.Controllers
 {
     [TestFixture]
     public class TrainingLineControllerTests
     {
-        [Test]
-        public async Task InsertTrainingLine_ValidTrainingLine_ReturnsCreatedResult()
+        private Mock<ITrainingLineRepository> _mockRepo;
+        private Mock<ILogger<TrainingLineController>> _mockLogger;
+        private Mock<IMapper> _mockMapper;
+        private TrainingLineController _controller;
+
+        [SetUp]
+        public void Setup()
         {
-            // Arrange
-            var trainingLineRepositoryMock = new Mock<ITrainingLineRepository>();
-            var loggerMock = new Mock<ILogger<TrainingLineController>>();
-            var controller = new TrainingLineController(trainingLineRepositoryMock.Object, loggerMock.Object);
-            var trainingLineToInsert = new TrainingLine
-            {
-                ID = 1,
-                ExerciseID = 1,
-                TrainingID = 1,
-                Sets = "3",
-                Repetitions = "10",
-                Weight = "50 kg",
-                Recovery = "2 min",
-                Others = "Test Others",
-                Notes = "Test Notes"
-            };
-
-            // Act
-            var result = await controller.InsertTrainingLine(trainingLineToInsert) as CreatedResult;
-
-            // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.StatusCode, Is.EqualTo(201));
-
-            trainingLineRepositoryMock.Verify(repo => repo.InsertTrainingLine(It.IsAny<TrainingLine>()), Times.Once);
+            _mockRepo = new Mock<ITrainingLineRepository>();
+            _mockLogger = new Mock<ILogger<TrainingLineController>>();
+            _mockMapper = new Mock<IMapper>();
+            _controller = new TrainingLineController(_mockRepo.Object, _mockLogger.Object, _mockMapper.Object);
         }
 
         [Test]
-        public async Task UpdateTrainingLine_ValidTrainingLine_ReturnsNoContent()
+        public async Task GetTrainingLinesOfTraining_ReturnsOkResult_WithTrainingLines()
         {
             // Arrange
-            var trainingLineRepositoryMock = new Mock<ITrainingLineRepository>();
-            var loggerMock = new Mock<ILogger<TrainingLineController>>();
-            var controller = new TrainingLineController(trainingLineRepositoryMock.Object, loggerMock.Object);
-            var trainingLineToUpdate = new TrainingLine
-            {
-                ID = 1,
-                ExerciseID = 2,
-                TrainingID = 1,
-                Sets = "4",
-                Repetitions = "12",
-                Weight = "60 kg",
-                Recovery = "3 min",
-                Others = "Updated Others",
-                Notes = "Updated Notes"
-            };
-            // Configurar el comportamiento del mock para devolver un Training vacío
-            trainingLineRepositoryMock.Setup(repo => repo.GetTrainingLine(trainingLineToUpdate.ID)).ReturnsAsync(new TrainingLine());
-
-            // Act
-            var result = await controller.UpdateTrainingLine(trainingLineToUpdate) as NoContentResult;
-
-            // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.StatusCode, Is.EqualTo(204));
-
-            trainingLineRepositoryMock.Verify(repo => repo.UpdateTrainingLine(It.IsAny<TrainingLine>()), Times.Once);
-        }
-
-        [Test]
-        public async Task DeleteTrainingLine_ValidId_ReturnsNoContent()
-        {
-            // Arrange
-            var trainingLineRepositoryMock = new Mock<ITrainingLineRepository>();
-            var loggerMock = new Mock<ILogger<TrainingLineController>>();
-            var controller = new TrainingLineController(trainingLineRepositoryMock.Object, loggerMock.Object);
-            var trainingLineIdToDelete = 1;
-
-            // Configurar el comportamiento del mock para devolver un Training vacío
-            trainingLineRepositoryMock.Setup(repo => repo.GetTrainingLine(trainingLineIdToDelete)).ReturnsAsync(new TrainingLine());
-
-            // Act
-            var result = await controller.DeleteTrainingLine(trainingLineIdToDelete);
-
-            // Assert
-            Assert.That(result, Is.TypeOf<OkObjectResult>());
-
-            trainingLineRepositoryMock.Verify(repo => repo.DeleteTrainingLine(trainingLineIdToDelete), Times.Once);
-        }
-
-        [Test]
-        public async Task GetTrainingLine_ValidId_ReturnsOkResult()
-        {
-            // Arrange
-            var trainingLineRepositoryMock = new Mock<ITrainingLineRepository>();
-            var loggerMock = new Mock<ILogger<TrainingLineController>>();
-            var controller = new TrainingLineController(trainingLineRepositoryMock.Object, loggerMock.Object);
-            var expectedTrainingLine = new TrainingLine
-            {
-                ID = 1,
-                ExerciseID = 1,
-                TrainingID = 1,
-                Sets = "3",
-                Repetitions = "10",
-                Weight = "50 kg",
-                Recovery = "2 min",
-                Others = "Test Others",
-                Notes = "Test Notes"
-            };
-
-            trainingLineRepositoryMock.Setup(repo => repo.GetTrainingLine(It.IsAny<int>()))
-                .ReturnsAsync(expectedTrainingLine);
-
-            // Act
-            var result = await controller.GetTrainingLine(1) as OkObjectResult;
-
-            // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.StatusCode, Is.EqualTo(200));
-
-            var actualTrainingLine = result.Value as TrainingLine;
-            Assert.That(actualTrainingLine, Is.EqualTo(expectedTrainingLine));
-        }
-
-        [Test]
-        public async Task GetTrainingLinesOfTraining_ValidId_ReturnsOkResult()
-        {
-            // Arrange
-            var trainingLineRepositoryMock = new Mock<ITrainingLineRepository>();
-            var loggerMock = new Mock<ILogger<TrainingLineController>>();
-            var controller = new TrainingLineController(trainingLineRepositoryMock.Object, loggerMock.Object);
-            var expectedTrainingLines = new List<TrainingLine>
+            var trainingLines = new List<TrainingLine>
             {
                 new TrainingLine { ID = 1, ExerciseID = 1, TrainingID = 1 },
-                new TrainingLine { ID = 2, ExerciseID = 2, TrainingID = 1 },
+                new TrainingLine { ID = 2, ExerciseID = 2, TrainingID = 1 }
+            };
+            var TrainingLineDtos = new List<TrainingLineDto>
+            {
+                new TrainingLineDto { ID = 1, ExerciseID = 1, TrainingID = 1 },
+                new TrainingLineDto { ID = 2, ExerciseID = 2, TrainingID = 1 }
             };
 
-            trainingLineRepositoryMock.Setup(repo => repo.GetTrainingLinesOfTraining(It.IsAny<int>()))
-                .ReturnsAsync(expectedTrainingLines);
+            _mockRepo.Setup(repo => repo.GetTrainingLinesOfTraining(1)).ReturnsAsync(trainingLines);
+            _mockMapper.Setup(m => m.Map<IEnumerable<TrainingLineDto>>(trainingLines)).Returns(TrainingLineDtos);
 
             // Act
-            var result = await controller.GetTrainingLinesOfTraining(1) as OkObjectResult;
+            var result = await _controller.GetTrainingLinesOfTraining(1);
 
             // Assert
-            Assert.That(result, Is.Not.Null);
-            Assert.That(result.StatusCode, Is.EqualTo(200));
+            var okResult = result as OkObjectResult;
+            Assert.NotNull(okResult);
+            Assert.AreEqual(200, okResult.StatusCode);
+            Assert.IsInstanceOf<IEnumerable<TrainingLineDto>>(okResult.Value);
+            var returnValue = okResult.Value as IEnumerable<TrainingLineDto>;
+            Assert.AreEqual(2, returnValue.Count());
+        }
 
-            var actualTrainingLines = result.Value as IEnumerable<TrainingLine>;
-            Assert.That(actualTrainingLines, Is.EqualTo(expectedTrainingLines));
+        [Test]
+        public async Task GetTrainingLine_ReturnsOkResult_WithTrainingLine()
+        {
+            // Arrange
+            var trainingLine = new TrainingLine { ID = 1, ExerciseID = 1, TrainingID = 1 };
+            var TrainingLineDto = new TrainingLineDto { ID = 1, ExerciseID = 1, TrainingID = 1 };
+
+            _mockRepo.Setup(repo => repo.GetTrainingLine(1)).ReturnsAsync(trainingLine);
+            _mockMapper.Setup(m => m.Map<TrainingLineDto>(trainingLine)).Returns(TrainingLineDto);
+
+            // Act
+            var result = await _controller.GetTrainingLine(1);
+
+            // Assert
+            var okResult = result as OkObjectResult;
+            Assert.NotNull(okResult);
+            Assert.AreEqual(200, okResult.StatusCode);
+            Assert.IsInstanceOf<TrainingLineDto>(okResult.Value);
+            var returnValue = okResult.Value as TrainingLineDto;
+            Assert.AreEqual(1, returnValue.ID);
+        }
+
+        [Test]
+        public async Task InsertTrainingLine_ReturnsOkResult()
+        {
+            // Arrange
+            var TrainingLineDto = new TrainingLineDto { ID = 1, ExerciseID = 1, TrainingID = 1 };
+            var trainingLine = new TrainingLine { ID = 1, ExerciseID = 1, TrainingID = 1 };
+
+            _mockMapper.Setup(m => m.Map<TrainingLine>(TrainingLineDto)).Returns(trainingLine);
+            _mockRepo.Setup(repo => repo.InsertTrainingLine(trainingLine)).ReturnsAsync(true);
+
+            // Act
+            var result = await _controller.InsertTrainingLine(TrainingLineDto);
+
+            // Assert
+            var okResult = result as CreatedResult;
+            Assert.NotNull(okResult);
+            Assert.AreEqual(201, okResult.StatusCode);
+        }
+
+        [Test]
+        public async Task UpdateTrainingLine_ReturnsOkResult()
+        {
+            // Arrange
+            var TrainingLineDto = new TrainingLineDto { ID = 1, ExerciseID = 1, TrainingID = 1 };
+            var trainingLine = new TrainingLine { ID = 1, ExerciseID = 1, TrainingID = 1 };
+
+            _mockMapper.Setup(m => m.Map<TrainingLine>(TrainingLineDto)).Returns(trainingLine);
+            _mockRepo.Setup(repo => repo.UpdateTrainingLine(trainingLine)).ReturnsAsync(true);
+
+            // Act
+            var result = await _controller.UpdateTrainingLine(TrainingLineDto);
+
+            // Assert
+            var okResult = result as OkResult;
+            Assert.NotNull(okResult);
+            Assert.AreEqual(200, okResult.StatusCode);
+        }
+
+        [Test]
+        public async Task DeleteTrainingLine_ReturnsOkResult()
+        {
+            // Arrange
+            _mockRepo.Setup(repo => repo.DeleteTrainingLine(1)).ReturnsAsync(true);
+
+            // Act
+            var result = await _controller.DeleteTrainingLine(1) as OkObjectResult;
+
+            // Assert          
+            Assert.NotNull(result);
+            Assert.AreEqual(200, result.StatusCode);
         }
     }
 }

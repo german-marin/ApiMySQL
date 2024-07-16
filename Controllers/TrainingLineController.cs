@@ -1,12 +1,14 @@
 ﻿using ApiMySQL.Repositories;
 using ApiMySQL.Model;
 using Microsoft.AspNetCore.Mvc;
-
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using AutoMapper;
+using ApiMySQL.DTOs;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ApiMySQL.Controllers
 {
@@ -17,11 +19,13 @@ namespace ApiMySQL.Controllers
     {
         private readonly ITrainingLineRepository _trainingLineRepository;
         private readonly ILogger<TrainingLineController> _logger;
+        private readonly IMapper _mapper;
 
-        public TrainingLineController(ITrainingLineRepository trainingLineRepository, ILogger<TrainingLineController> logger)
+        public TrainingLineController(ITrainingLineRepository trainingLineRepository, ILogger<TrainingLineController> logger, IMapper mapper)
         {
             _trainingLineRepository = trainingLineRepository;
             _logger = logger;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -43,21 +47,14 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [SwaggerResponse(statusCode: 200, type: typeof(List<TrainingLine>), description: "successful operation")]
+        [SwaggerResponse(statusCode: 200, type: typeof(List<TrainingLineDto>), description: "successful operation")]
         public async Task<IActionResult> GetTrainingLinesOfTraining(int id)
         {
             try
             {
                 var trainingLines = await _trainingLineRepository.GetTrainingLinesOfTraining(id);
-
-                if (trainingLines == null || trainingLines.Count() == 0)
-                {
-                    _logger.LogError("****Error en la operación GetTrainingLinesOfTraining, no se encontraron TrainingLines para el Training especificado");
-                    return NoContent();
-                }
-
-                _logger.LogInformation("****Operación GetTrainingLinesOfTraining ejecutada correctamente.");
-                return Ok(trainingLines);
+                var trainingLineDtos = _mapper.Map<IEnumerable<TrainingLineDto>>(trainingLines);
+                return Ok(trainingLineDtos);
             }
             catch (Exception ex)
             {
@@ -85,21 +82,19 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [SwaggerResponse(statusCode: 200, type: typeof(TrainingLine), description: "successful operation")]
+        [SwaggerResponse(statusCode: 200, type: typeof(TrainingLineDto), description: "successful operation")]
         public async Task<IActionResult> GetTrainingLine(int id)
         {
             try
             {
-                var existingTrainingLine = await _trainingLineRepository.GetTrainingLine(id);
-
-                if (existingTrainingLine == null)
+                var trainingLine = await _trainingLineRepository.GetTrainingLine(id);
+                if (trainingLine == null)
                 {
-                    // El entrenamiento no existe, devolver código 204
-                    _logger.LogError("****Error en la operación GetTrainingLine, no existe el training a eliminar");
-                    return NoContent();
+                    return NotFound();
                 }
-                _logger.LogInformation("****Operación GetTrainingLine ejecutada correctamente.");
-                return Ok(existingTrainingLine);
+
+                var trainingLineDto = _mapper.Map<TrainingLineDto>(trainingLine);
+                return Ok(trainingLineDto);
             }
             catch (Exception ex)
             {
@@ -117,39 +112,47 @@ namespace ApiMySQL.Controllers
         /// Sample request:
         /// 
         ///     {
-        ///      "idExercise": 142,
-        ///      "idTraining": 10,
-        ///      "series": "4",
-        ///      "repetition": "12-10-8-6",
-        ///      "weight": "a tope",
-        ///      "recovery": "poco descanso",
-        ///      "others": "otras cosas",
-        ///      "notes": "dia 3"
+        ///        "ExerciseID": 1,
+        ///        "TrainingID": 1,
+        ///        "Sets": "3x10",
+        ///        "Repetitions": "10",
+        ///        "Weight": "20kg",
+        ///        "Recovery": "1 min",
+        ///        "Others": "",
+        ///        "Notes": "Ninguna",
+        ///        "Grip": "Neutral",
+        ///        "LastUpdated": "2022-01-01T00:00:00Z"
         ///     }
-        ///     
         /// </remarks>
-        /// <param name="trainingLine">Objeto TrainingLine a insertar</param>
-        /// <response code="201">TrainingLine insertada correctamente</response>
+        /// <param name="trainingLineDto">Objeto TrainingLine que se va a insertar</param>
+        /// <response code="200">TrainingLine insertada correctamente</response>
         /// <response code="500">Internal server error</response>
         /// <response code="400">Datos incorrectos o Training no encontrado</response>        
         [HttpPost("InsertTrainingLine")]
-        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> InsertTrainingLine([FromBody] TrainingLine trainingLine)
+        public async Task<IActionResult> InsertTrainingLine([FromBody] TrainingLineDto trainingLineDto)
         {
             try
             {
-                if (trainingLine == null)
+                if (trainingLineDto == null)
                     return BadRequest();
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
 
+                var trainingLine = _mapper.Map<TrainingLine>(trainingLineDto);
                 trainingLine.LastUpdated = DateTime.Now;
-                var created = await _trainingLineRepository.InsertTrainingLine(trainingLine);
+                var result = await _trainingLineRepository.InsertTrainingLine(trainingLine);
+
+                if (!result)
+                {
+                    _logger.LogError("****Error en la operación InsertTrainingLine.");
+                    return StatusCode(500, "No se pudo insertar la línea de entrenamiento.");
+                }
+
                 _logger.LogInformation("****Operación InsertTrainingLine ejecutada correctamente.");
-                return Created("created", created);
+                return Created("created", result);
             }
             catch (Exception ex)
             {
@@ -162,53 +165,63 @@ namespace ApiMySQL.Controllers
         /// Actualiza una línea de entrenamiento existente
         /// </summary>
         /// <remarks>
-        /// Recibe un objeto TrainingLine y lo actualiza en la BBDD.
+        /// Recibe un objeto TrainingLine y actualiza la línea de entrenamiento correspondiente en la BBDD.
         /// 
         /// Sample request:
         /// 
         ///     {
-        ///      "id": 4,
-        ///      "idExercise": 142,
-        ///      "idTraining": 10,
-        ///      "series": "4",
-        ///      "repetition": "12-10-8-6",
-        ///      "weight": "a tope",
-        ///      "recovery": "poco descanso",
-        ///      "others": "otras cosas",
-        ///      "notes": "dia 3"
+        ///        "ID": 1,
+        ///        "ExerciseID": 1,
+        ///        "TrainingID": 1,
+        ///        "Sets": "3x10",
+        ///        "Repetitions": "10",
+        ///        "Weight": "20kg",
+        ///        "Recovery": "1 min",
+        ///        "Others": "",
+        ///        "Notes": "Ninguna",
+        ///        "Grip": "Neutral",
+        ///        "LastUpdated": "2022-01-01T00:00:00Z"
         ///     }
-        ///     
         /// </remarks>
-        /// <param name="trainingLine">Objeto TrainingLine a actualizar</param>
-        /// <response code="204">TrainingLine actualizada correctamente</response>
+        /// <param name="trainingLineDto">Objeto TrainingLine que se va a actualizar</param>
+        /// <response code="200">TrainingLine actualizada correctamente</response>
         /// <response code="500">Internal server error</response>
-        /// <response code="400">Datos incorrectos o TrainingLine no encontrada</response>        
+        /// <response code="400">Datos incorrectos o TrainingLine no encontrada</response>     
         [HttpPut("UpdateTrainingLine")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> UpdateTrainingLine([FromBody] TrainingLine trainingLine)
+        public async Task<IActionResult> UpdateTrainingLine([FromBody] TrainingLineDto trainingLineDto)
         {
             try
             {
-                if (trainingLine == null)
+                if (trainingLineDto == null)
                     return BadRequest();
 
                 if (!ModelState.IsValid)
                     return BadRequest(ModelState);
+
+                var trainingLine = _mapper.Map<TrainingLine>(trainingLineDto);
                 // Verificar si el entrenamiento existe antes de intentar eliminarlo
-                var existingTrainingLine = await _trainingLineRepository.GetTrainingLine(trainingLine.ID);
-                if (existingTrainingLine == null)
+                //var existingTrainingLine = await _trainingLineRepository.GetTrainingLine(trainingLine.ID);
+                //if (existingTrainingLine == null)
+                //{
+                //    // El entrenamiento no existe, devolver código 400
+                //    _logger.LogError("****Error en la operación UpdateTrainingLine, no existe el training a modificar");
+                //    return BadRequest();
+                //}
+                //trainingLine.LastUpdated = DateTime.Now;
+
+                var result = await _trainingLineRepository.UpdateTrainingLine(trainingLine);
+
+                if (!result)
                 {
-                    // El entrenamiento no existe, devolver código 400
-                    _logger.LogError("****Error en la operación UpdateTrainingLine, no existe el training a modificar");
-                    return BadRequest();
+                    _logger.LogError("****Error en la operación UpdateTrainingLine.");
+                    return StatusCode(500, "No se pudo actualizar la línea de entrenamiento.");
                 }
 
-                trainingLine.LastUpdated = DateTime.Now;
-                await _trainingLineRepository.UpdateTrainingLine(trainingLine);
                 _logger.LogInformation("****Operación UpdateTrainingLine ejecutada correctamente.");
-                return NoContent();
+                return Ok();
             }
             catch (Exception ex)
             {
@@ -221,43 +234,39 @@ namespace ApiMySQL.Controllers
         /// Elimina una línea de entrenamiento por su ID
         /// </summary>
         /// <remarks>
-        /// Recibe el ID de la TrainingLine que se desea eliminar y la borra de la BBDD.
+        /// Elimina una línea de entrenamiento de la BBDD según su ID.
         /// 
         /// Sample request:
         /// 
-        ///     Delete /api/TrainingLine?id=10
+        ///     Delete /api/TrainingLine/1
         ///     
         /// </remarks>
-        /// <param name="id">Identificador de la TrainingLine</param>
-        /// <response code="200">TrainingLine eliminada</response>
-        /// <response code="204">TrainingLine no encontrada</response>
+        /// <param name="id">Identificador de la línea de entrenamiento que se va a eliminar</param>
+        /// <response code="200">TrainingLine eliminada correctamente</response>
         /// <response code="500">Internal server error</response>
         [HttpDelete("DeleteTrainingLine")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [SwaggerResponse(statusCode: 200, type: typeof(bool), description: "TrainingLine eliminada")]
         public async Task<IActionResult> DeleteTrainingLine(int id)
         {
             try
             {
-                // Verificar si el entrenamiento existe antes de intentar eliminarlo
-                var existingTrainingLine = await _trainingLineRepository.GetTrainingLine(id);
-                if (existingTrainingLine == null)
+                var result = await _trainingLineRepository.DeleteTrainingLine(id);
+
+                if (!result)
                 {
-                    // El entrenamiento no existe, devolver código 204
-                    _logger.LogError("****Error en la operación DeleteTrainingLine, no existe el training a eliminar");
-                    return NoContent();
+                    _logger.LogError("****Error en la operación DeleteTrainingLine.");
+                    return StatusCode(500, "No se pudo eliminar la línea de entrenamiento.");
                 }
-                await _trainingLineRepository.DeleteTrainingLine(id);
+
                 _logger.LogInformation("****Operación DeleteTrainingLine ejecutada correctamente.");
-                return Ok(true); // Devuelve true si la eliminación fue exitosa
+                return Ok(true);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "****Error en la operación DeleteTrainingLine.");
                 return StatusCode(500, "Error interno del servidor.");
             }
-        }       
+        }
     }
 }

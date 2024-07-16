@@ -12,10 +12,10 @@ namespace ApiMySQL.Model
         public int MuscleGroupID { get; set; }
         public DateTime? LastUpdate { get; set; }
 
-        [ForeignKey("MuscleGroupID")]
-        public MuscleGroup MuscleGroup { get; set; }
+        //[ForeignKey("MuscleGroupID")]
+        //public MuscleGroup MuscleGroup { get; set; }
 
-        // Propiedad de navegación
-        public ICollection<Exercise> Exercises { get; set; }
+        //// Propiedad de navegación
+        //public ICollection<Exercise> Exercises { get; set; }
     }
 }

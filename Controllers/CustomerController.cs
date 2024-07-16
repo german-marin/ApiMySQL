@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using Swashbuckle.AspNetCore.Annotations;
 using Microsoft.AspNetCore.Authorization;
+using AutoMapper;
+using ApiMySQL.DTOs;
 
 namespace ApiMySQL.Controllers
 {
@@ -17,31 +19,34 @@ namespace ApiMySQL.Controllers
     {
         private readonly ICustomerRepository _customerRepository;
         private readonly ILogger<CustomerController> _logger;
+        private readonly IMapper _mapper;
 
-        public CustomerController(ICustomerRepository customerRepository, ILogger<CustomerController> logger)
+        public CustomerController(ICustomerRepository customerRepository, ILogger<CustomerController> logger, IMapper mapper)
         {
             _customerRepository = customerRepository;
             _logger = logger;
+            _mapper = mapper;
         }
 
         /// <summary>
         /// Obtiene todos los clientes
         /// </summary>
         /// <remarks>
-        /// Devuelve una lista de objetos de tipo Customer.
+        /// Devuelve una lista de objetos de tipo CustomerDto.
         /// </remarks>
         /// <response code="200">Lista de clientes</response>
         /// <response code="500">Error interno del servidor</response>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(IEnumerable<Customer>), Description = "successful operation")]
+        [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(IEnumerable<CustomerDto>), Description = "successful operation")]
         public async Task<IActionResult> GetAllCustomers()
         {
             try
             {
                 var customers = await _customerRepository.GetAllCustomers();
-                return Ok(customers);
+                var customersDto = _mapper.Map<IEnumerable<CustomerDto>>(customers);
+                return Ok(customersDto);
             }
             catch (Exception ex)
             {
@@ -54,7 +59,7 @@ namespace ApiMySQL.Controllers
         /// Obtiene un cliente específico por su ID
         /// </summary>
         /// <remarks>
-        /// Devuelve un objeto de tipo Customer con el ID especificado.
+        /// Devuelve un objeto de tipo CustomerDto con el ID especificado.
         /// </remarks>
         /// <param name="id">Identificador del cliente</param>
         /// <response code="200">Cliente encontrado</response>
@@ -64,7 +69,7 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(Customer), Description = "successful operation")]
+        [SwaggerResponse(StatusCodes.Status200OK, Type = typeof(CustomerDto), Description = "successful operation")]
         public async Task<IActionResult> GetCustomer(int id)
         {
             try
@@ -75,7 +80,8 @@ namespace ApiMySQL.Controllers
                     _logger.LogError("Error en la operación GetCustomer, no existe el cliente especificado");
                     return NotFound();
                 }
-                return Ok(customer);
+                var customerDto = _mapper.Map<CustomerDto>(customer);
+                return Ok(customerDto);
             }
             catch (Exception ex)
             {
@@ -88,9 +94,9 @@ namespace ApiMySQL.Controllers
         /// Inserta un nuevo cliente
         /// </summary>
         /// <remarks>
-        /// Recibe un objeto Customer y lo inserta en la BBDD.
+        /// Recibe un objeto CustomerDto y lo inserta en la BBDD.
         /// </remarks>
-        /// <param name="customer">Objeto Customer a insertar</param>
+        /// <param name="customerDto">Objeto CustomerDto a insertar</param>
         /// <response code="201">Cliente insertado correctamente</response>
         /// <response code="400">Datos incorrectos</response>
         /// <response code="500">Error interno del servidor</response>
@@ -98,22 +104,24 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> InsertCustomer([FromBody] Customer customer)
+        public async Task<IActionResult> InsertCustomer([FromBody] CustomerDto customerDto)
         {
             try
             {
-                if (customer == null || !ModelState.IsValid)
+                if (customerDto == null || !ModelState.IsValid)
                 {
                     _logger.LogError("Error en la operación InsertCustomer, datos incorrectos");
                     return BadRequest();
                 }
 
+                var customer = _mapper.Map<Customer>(customerDto);
                 customer.LastUpdated = DateTime.Now;
                 var result = await _customerRepository.InsertCustomer(customer);
                 if (result)
                 {
                     _logger.LogInformation("Operación InsertCustomer ejecutada correctamente.");
-                    return CreatedAtAction(nameof(GetCustomer), new { id = customer.ID }, customer);
+                    var customerDtoResult = _mapper.Map<CustomerDto>(customer);
+                    return CreatedAtAction(nameof(GetCustomer), new { id = customerDtoResult.ID }, customerDtoResult);
                 }
                 return StatusCode(500, "A problem happened while handling your request.");
             }
@@ -128,10 +136,10 @@ namespace ApiMySQL.Controllers
         /// Actualiza un cliente existente
         /// </summary>
         /// <remarks>
-        /// Recibe un objeto Customer y lo actualiza en la BBDD.
+        /// Recibe un objeto CustomerDto y lo actualiza en la BBDD.
         /// </remarks>
         /// <param name="id">Identificador del cliente</param>
-        /// <param name="customer">Objeto Customer a actualizar</param>
+        /// <param name="customerDto">Objeto CustomerDto a actualizar</param>
         /// <response code="204">Cliente actualizado correctamente</response>
         /// <response code="400">Datos incorrectos</response>
         /// <response code="404">Cliente no encontrado</response>
@@ -141,23 +149,24 @@ namespace ApiMySQL.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> UpdateCustomer([FromBody] Customer customer)
+        public async Task<IActionResult> UpdateCustomer([FromBody] CustomerDto customerDto)
         {
             try
             {
-                if (customer == null || !ModelState.IsValid)
+                if (customerDto == null || !ModelState.IsValid)
                 {
                     _logger.LogError("Error en la operación UpdateCustomer, datos incorrectos");
                     return BadRequest();
                 }
 
-                var existingCustomer = await _customerRepository.GetCustomer(customer.ID);
+                var existingCustomer = await _customerRepository.GetCustomer(customerDto.ID);
                 if (existingCustomer == null)
                 {
                     _logger.LogError("Error en la operación UpdateCustomer, no existe el cliente a actualizar");
                     return NotFound();
                 }
 
+                var customer = _mapper.Map(customerDto, existingCustomer);
                 customer.LastUpdated = DateTime.Now;
                 var result = await _customerRepository.UpdateCustomer(customer);
                 if (result)
